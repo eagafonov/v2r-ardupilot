@@ -17,6 +17,7 @@
 #define HAL_BOARD_PX4      5
 #define HAL_BOARD_FLYMAPLE 6
 #define HAL_BOARD_LINUX    7
+#define HAL_BOARD_V2R      8
 #define HAL_BOARD_EMPTY    99
 
 /*
@@ -42,6 +43,9 @@
 #define HAL_BOARD_NAME "PX4"
 #elif CONFIG_HAL_BOARD == HAL_BOARD_LINUX
 #define AP_HAL_BOARD_DRIVER AP_HAL_Linux
+#define HAL_BOARD_NAME "Linux"
+#elif CONFIG_HAL_BOARD == HAL_BOARD_LINUX_V2R
+#define AP_HAL_BOARD_DRIVER AP_HAL_Linux_v2r
 #define HAL_BOARD_NAME "Linux"
 #elif CONFIG_HAL_BOARD == HAL_BOARD_EMPTY
 #define AP_HAL_BOARD_DRIVER AP_HAL_Empty
