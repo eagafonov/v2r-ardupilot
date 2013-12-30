@@ -1,5 +1,6 @@
 
 #include <AP_HAL.h>
+#include <logger.h>
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_V2R
 #include "I2CDriver.h"
@@ -14,6 +15,8 @@
 #ifndef I2C_SMBUS_BLOCK_MAX
 #include <linux/i2c.h>
 #endif
+
+#include <errno.h>
 
 using namespace V2R;
 
@@ -52,6 +55,7 @@ void V2RI2CDriver::end()
 bool V2RI2CDriver::set_address(uint8_t addr)
 {
     if (_fd == -1) {
+        log_err() << "I2C Fails to set addr: file is not opened";
         return false;
     }
     if (_addr != addr) {
@@ -77,6 +81,7 @@ uint8_t V2RI2CDriver::write(uint8_t addr, uint8_t len, uint8_t* data)
         return 1;
     }
     if (::write(_fd, data, len) != len) {
+        log_err() << "I2C Fails to write";
         return 1;
     }
     return 0; // success
@@ -154,11 +159,14 @@ uint8_t V2RI2CDriver::readRegisters(uint8_t addr, uint8_t reg,
 uint8_t V2RI2CDriver::readRegister(uint8_t addr, uint8_t reg, uint8_t* data)
 {
     if (!set_address(addr)) {
+        log_err() << "I2C Fails to set addr" << std::hex << addr;
         return 1;
     }
     union i2c_smbus_data v;
     if (_i2c_smbus_access(_fd,I2C_SMBUS_READ, reg,
                           I2C_SMBUS_BYTE_DATA, &v)) {
+        log_err() << "I2C Fails to read reg 0x" << std::hex << (int) reg << " " << errno;
+
         return 1;
     }
     *data = v.byte;

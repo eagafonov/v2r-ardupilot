@@ -248,6 +248,8 @@ static AP_InertialSensor_PX4 ins;
 AP_InertialSensor_Flymaple ins;
 #elif CONFIG_IMU_TYPE == CONFIG_IMU_L3G4200D
 AP_InertialSensor_L3G4200D ins;
+#elif CONFIG_IMU_TYPE == CONFIG_IMU_MPU6050
+static AP_InertialSensor_MPU6000 ins;
 #endif
 
  #if CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL

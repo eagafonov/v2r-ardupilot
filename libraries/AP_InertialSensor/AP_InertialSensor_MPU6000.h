@@ -14,6 +14,20 @@
 // enable debug to see a register dump on startup
 #define MPU6000_DEBUG 0
 
+/** 
+ * MPU60X0 bus type (spi/i2c)
+ */
+#define MPU6000_BUS_SPI 0
+#define MPU6000_BUS_I2C 1
+
+// MPU6000_TRAMNSPORT is one of MPU6000_BUS_XXX defined above
+
+// #define MPU6000_BUS MPU6000_BUS_SPI
+#define MPU6000_BUS MPU6000_BUS_I2C
+
+// Set to 1 if MPU6050 Int pin it connected
+#define MPU6000_DATA_READY 0
+
 class AP_InertialSensor_MPU6000 : public AP_InertialSensor
 {
 public:
@@ -47,8 +61,12 @@ private:
     void                 _register_write( uint8_t reg, uint8_t val );
     bool                 _hardware_init(Sample_rate sample_rate);
 
+#if MPU6000_BUS == MPU6000_BUS_SPI
     AP_HAL::SPIDeviceDriver *_spi;
-    AP_HAL::Semaphore *_spi_sem;
+#elif MPU6000_BUS == MPU6000_BUS_I2C
+    AP_HAL::I2CDriver *_i2c;
+#endif
+    AP_HAL::Semaphore *_bus_sem;
 
     uint16_t					_num_samples;
     static const float          _gyro_scale;

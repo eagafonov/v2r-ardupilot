@@ -2,6 +2,8 @@
 
 #include <AP_HAL.h>
 #include "AP_InertialSensor_MPU6000.h"
+#include <logger.h>
+#include <iomanip>
 
 extern const AP_HAL::HAL& hal;
 
@@ -150,6 +152,8 @@ extern const AP_HAL::HAL& hal;
 #define MPU6000_REV_D9                          0x59    // 0101			1001
 
 
+#define MPU6000_I2C_BASE_ADDR 0x68
+
 /*
  *  RM-MPU-6000A-00.pdf, page 33, section 4.25 lists LSB sensitivity of
  *  gyro as 16.4 LSB/DPS at scale factor of +/- 2000dps (FS_SEL==3)
@@ -174,16 +178,24 @@ AP_InertialSensor_MPU6000::AP_InertialSensor_MPU6000() :
 
 uint16_t AP_InertialSensor_MPU6000::_init_sensor( Sample_rate sample_rate )
 {
+    log_dbg() << "MPU6000::_init_sensor";
     if (_initialised) return _mpu6000_product_id;
     _initialised = true;
 
+#if MPU6000_BUS == MPU6000_BUS_SPI
     _spi = hal.spi->device(AP_HAL::SPIDevice_MPU6000);
-    _spi_sem = _spi->get_semaphore();
+    _bus_sem = _spi->get_semaphore();
+#elif MPU6000_BUS == MPU6000_BUS_I2C
+    _i2c = hal.i2c;
+    _bus_sem = _i2c->get_semaphore();
+#endif
 
     /* Pin 70 defined especially to hook
        up PE6 to the hal.gpio abstraction.
        (It is not a valid pin under Arduino.) */
+#if MPU6000_DATA_READY
     _drdy_pin = hal.gpio->channel(70);
+#endif
 
     hal.scheduler->suspend_timer_procs();
 
@@ -192,19 +204,24 @@ uint16_t AP_InertialSensor_MPU6000::_init_sensor( Sample_rate sample_rate )
         bool success = _hardware_init(sample_rate);
         if (success) {
             hal.scheduler->delay(5+2);
-            if (!_spi_sem->take(100)) {
+            if (!_bus_sem->take(100)) {
                 hal.scheduler->panic(PSTR("MPU6000: Unable to get semaphore"));
             }
             if (_data_ready()) {
-                _spi_sem->give();
+                _bus_sem->give();
                 break;
             } else {
+                log_inf() << "MPU6000 startup failed: no data ready";
                 hal.console->println_P(
                         PSTR("MPU6000 startup failed: no data ready"));
             }
-            _spi_sem->give();
+            _bus_sem->give();
+        } else {
+            log_wrn() << "Failed to initialize HW. Try again";
         }
+
         if (tries++ > 5) {
+            log_wrn() << "Give up";
             hal.scheduler->panic(PSTR("PANIC: failed to boot MPU6000 5 times")); 
         }
     } while (1);
@@ -217,9 +234,9 @@ uint16_t AP_InertialSensor_MPU6000::_init_sensor( Sample_rate sample_rate )
      * its caller. */
     _last_sample_time_micros = hal.scheduler->micros();
     hal.scheduler->delay(10);
-    if (_spi_sem->take(100)) {
+    if (_bus_sem->take(100)) {
         _read_data_transaction();
-        _spi_sem->give();
+        _bus_sem->give();
     }
 
     // start the timer process to read samples
@@ -228,6 +245,8 @@ uint16_t AP_InertialSensor_MPU6000::_init_sensor( Sample_rate sample_rate )
 #if MPU6000_DEBUG
     _dump_registers();
 #endif
+    log_dbg() << "MPU6000::_init_sensor done. Product_ID: 0x" << std::hex << _mpu6000_product_id;
+
     return _mpu6000_product_id;
 }
 
@@ -252,6 +271,7 @@ bool AP_InertialSensor_MPU6000::update( void )
 {
     // wait for at least 1 sample
     if (!wait_for_sample(1000)) {
+        log_dbg() << "MPU6000 update not now yet";
         return false;
     }
 
@@ -281,12 +301,16 @@ bool AP_InertialSensor_MPU6000::update( void )
     _accel[0] -= _accel_offset[0];
 
     if (_last_filter_hz != _mpu6000_filter) {
-        if (_spi_sem->take(10)) {
+        if (_bus_sem->take(10)) {
+#if MPU6000_BUS == MPU6000_BUS_SPI
             _spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_LOW);
+#endif
             _set_filter_register(_mpu6000_filter, 0);
+#if MPU6000_BUS == MPU6000_BUS_SPI
             _spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_HIGH);
+#endif
             _error_count = 0;
-            _spi_sem->give();
+            _bus_sem->give();
         }
     }
 
@@ -316,7 +340,7 @@ bool AP_InertialSensor_MPU6000::_data_ready()
 void AP_InertialSensor_MPU6000::_poll_data(void)
 {
     if (hal.scheduler->in_timerprocess()) {
-        if (!_spi_sem->take_nonblocking()) {
+        if (!_bus_sem->take_nonblocking()) {
             /*
               the semaphore being busy is an expected condition when the
               mainline code is calling wait_for_sample() which will
@@ -329,15 +353,15 @@ void AP_InertialSensor_MPU6000::_poll_data(void)
             _last_sample_time_micros = hal.scheduler->micros();
             _read_data_transaction(); 
         }
-        _spi_sem->give();
+        _bus_sem->give();
     } else {
         /* Synchronous read - take semaphore */
-        if (_spi_sem->take(10)) {
+        if (_bus_sem->take(10)) {
             if (_data_ready()) {
                 _last_sample_time_micros = hal.scheduler->micros();
                 _read_data_transaction(); 
             }
-            _spi_sem->give();
+            _bus_sem->give();
         } else {
             hal.scheduler->panic(
                 PSTR("PANIC: AP_InertialSensor_MPU6000::_poll_data "
@@ -348,13 +372,14 @@ void AP_InertialSensor_MPU6000::_poll_data(void)
 
 
 void AP_InertialSensor_MPU6000::_read_data_transaction() {
+#if MPU6000_BUS == MPU6000_BUS_SPI
     /* one resister address followed by seven 2-byte registers */
     struct PACKED {
         uint8_t cmd;
         uint8_t int_status;
         uint8_t v[14];
     } rx, tx = { cmd : MPUREG_INT_STATUS | 0x80, };
-    
+
     _spi->transaction((const uint8_t *)&tx, (uint8_t *)&rx, sizeof(rx));
 
     /*
@@ -372,14 +397,36 @@ void AP_InertialSensor_MPU6000::_read_data_transaction() {
             _spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_LOW);
         }
     }
+#elif MPU6000_BUS == MPU6000_BUS_I2C
+    struct PACKED {
+        uint8_t v[14]; // Data to read accel, temperature and gyro registers at once
+    } rx;
 
+    _i2c->readRegisters(MPU6000_I2C_BASE_ADDR, MPUREG_ACCEL_XOUT_H, sizeof(rx), (uint8_t*)(&rx));
+#endif
+
+    // 0,1,2 - Accel x,y,z
+    // 3 - temperature
+    // 4,5,6 - Gyro
 #define int16_val(v, idx) ((int16_t)(((uint16_t)v[2*idx] << 8) | v[2*idx+1]))
+
+#ifdef APM_ACCEL_X_Y_SWAP
+    // X and Y is swapped due to hardware layout or some other reason
+    // http://ardupilot.com/forum/viewtopic.php?f=69&t=5322
     _accel_sum.x += int16_val(rx.v, 1);
     _accel_sum.y += int16_val(rx.v, 0);
     _accel_sum.z -= int16_val(rx.v, 2);
     _gyro_sum.x  += int16_val(rx.v, 5);
     _gyro_sum.y  += int16_val(rx.v, 4);
-    _gyro_sum.z  -= int16_val(rx.v, 6);
+    _gyro_sum.z  -= int16_val(rx.v, 6);  // Z axis goes up but gravity goes down, Fix this inconvinience here
+#else
+    _accel_sum.x += int16_val(rx.v, 0);
+    _accel_sum.y += int16_val(rx.v, 1);
+    _accel_sum.z += int16_val(rx.v, 2);
+    _gyro_sum.x  += int16_val(rx.v, 4);
+    _gyro_sum.y  += int16_val(rx.v, 5);
+    _gyro_sum.z  += int16_val(rx.v, 6);
+#endif
     _sum_count++;
 
     if (_sum_count == 0) {
@@ -391,6 +438,8 @@ void AP_InertialSensor_MPU6000::_read_data_transaction() {
 
 uint8_t AP_InertialSensor_MPU6000::_register_read( uint8_t reg )
 {
+//     log_dbg() << "reg read 0x" << std::hex << (int)reg; 
+#if MPU6000_BUS == MPU6000_BUS_SPI
     uint8_t addr = reg | 0x80; // Set most significant bit
 
     uint8_t tx[2];
@@ -401,16 +450,29 @@ uint8_t AP_InertialSensor_MPU6000::_register_read( uint8_t reg )
     _spi->transaction(tx, rx, 2);
 
     return rx[1];
+#elif MPU6000_BUS == MPU6000_BUS_I2C    
+    uint8_t data = 0;
+    if (_i2c->readRegister(MPU6000_I2C_BASE_ADDR, reg, &data)) {
+        log_dbg() << "Failed to read i2c 0x" << std::hex << (int)reg;
+        hal.console->printf("Failed to read i2c at 0x%x reg:0x%x\n", MPU6000_I2C_BASE_ADDR, reg);
+    } else {
+        return data;
+    }
+#endif
 }
 
 void AP_InertialSensor_MPU6000::_register_write(uint8_t reg, uint8_t val)
 {
+#if MPU6000_BUS == MPU6000_BUS_SPI
     uint8_t tx[2];
     uint8_t rx[2];
 
     tx[0] = reg;
     tx[1] = val;
     _spi->transaction(tx, rx, 2);
+#elif MPU6000_BUS == MPU6000_BUS_I2C
+    _i2c->writeRegister(MPU6000_I2C_BASE_ADDR, reg, val);
+#endif
 }
 
 /*
@@ -448,12 +510,18 @@ void AP_InertialSensor_MPU6000::_set_filter_register(uint8_t filter_hz, uint8_t 
 
 bool AP_InertialSensor_MPU6000::_hardware_init(Sample_rate sample_rate)
 {
-    if (!_spi_sem->take(100)) {
+    log_dbg() << "MPU6000::_hardware_init " << sample_rate;
+
+    if (!_bus_sem->take(100)) {
         hal.scheduler->panic(PSTR("MPU6000: Unable to get semaphore"));
     }
 
+#if MPU6000_BUS == MPU6000_BUS_SPI
     // initially run the bus at low speed (500kHz on APM2)
     _spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_LOW);
+#elif MPU6000_BUS == MPU6000_BUS_I2C
+    _i2c->begin();
+#endif
 
     // Chip reset
     uint8_t tries;
@@ -476,17 +544,20 @@ bool AP_InertialSensor_MPU6000::_hardware_init(Sample_rate sample_rate)
 #endif
     }
     if (tries == 5) {
+        log_err() << "Failed to boot MPU6000 5 times";
         hal.console->println_P(PSTR("Failed to boot MPU6000 5 times"));
-        _spi_sem->give();
+        _bus_sem->give();
         return false;
     }
 
     _register_write(MPUREG_PWR_MGMT_2, 0x00);            // only used for wake-up in accelerometer only low power mode
     hal.scheduler->delay(1);
 
+#if MPU6000_BUS == MPU6000_BUS_SPI
     // Disable I2C bus (recommended on datasheet)
     _register_write(MPUREG_USER_CTRL, BIT_USER_CTRL_I2C_IF_DIS);
     hal.scheduler->delay(1);
+#endif
 
     uint8_t default_filter;
 
@@ -547,10 +618,13 @@ bool AP_InertialSensor_MPU6000::_hardware_init(Sample_rate sample_rate)
 
     // now that we have initialised, we set the SPI bus speed to high
     // (8MHz on APM2)
+#if MPU6000_BUS == MPU6000_BUS_SPI
     _spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_HIGH);
+#endif
 
-    _spi_sem->give();
+    _bus_sem->give();
 
+    log_dbg() << "MPU6000::_hardware_init complete";
     return true;
 }
 
