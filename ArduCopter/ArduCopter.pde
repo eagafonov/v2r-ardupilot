@@ -91,6 +91,7 @@
 #include <AP_HAL_PX4.h>
 #include <AP_HAL_FLYMAPLE.h>
 #include <AP_HAL_Linux.h>
+#include <AP_HAL_V2R.h>
 #include <AP_HAL_Empty.h>
 
 // Application dependencies

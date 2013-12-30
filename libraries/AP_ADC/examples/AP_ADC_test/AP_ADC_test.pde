@@ -14,12 +14,13 @@
 #include <AP_HAL.h>
 #include <AP_HAL_AVR.h>
 #include <AP_HAL_Linux.h>
+#include <AP_HAL_V2R.h>
 
 #include <AP_ADC.h>
 
 uint32_t timer;
 
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM1 || CONFIG_HAL_BOARD == HAL_BOARD_LINUX
+#if CONFIG_HAL_BOARD == HAL_BOARD_APM1 || CONFIG_HAL_BOARD == HAL_BOARD_LINUX || CONFIG_HAL_BOARD == HAL_BOARD_V2R
 /* Only build this sketch for APM1 and Linux */
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 

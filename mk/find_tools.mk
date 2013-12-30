@@ -55,6 +55,17 @@ ARM_LD      :=  $(call FIND_TOOL,arm-none-eabi-g++)
 ARM_GDB     :=  $(call FIND_TOOL,arm-none-eabi-gdb)
 ARM_OBJCOPY :=  $(call FIND_TOOL,arm-none-eabi-objcopy)
 
+# Tools for V2R (ARM Linux)
+# Toolchain is expected to be on the PATH
+
+ARM_LINUX_CXX     :=  $(call FIND_TOOL,arm-none-linux-gnueabi-g++)
+ARM_LINUX_CC      :=  $(call FIND_TOOL,arm-none-linux-gnueabi-gcc)
+ARM_LINUX_AS      :=  $(call FIND_TOOL,arm-none-linux-gnueabi-gcc)
+ARM_LINUX_AR      :=  $(call FIND_TOOL,arm-none-linux-gnueabi-ar)
+ARM_LINUX_LD      :=  $(call FIND_TOOL,arm-none-linux-gnueabi-g++)
+ARM_LINUX_GDB     :=  $(call FIND_TOOL,arm-none-linux-gnueabi-gdb)
+ARM_LINUX_OBJCOPY :=  $(call FIND_TOOL,arm-none-linux-gnueabi-objcopy)
+
 CXX = $($(TOOLCHAIN)_CXX)
 CC = $($(TOOLCHAIN)_CC)
 AS = $($(TOOLCHAIN)_AS)

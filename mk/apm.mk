@@ -38,8 +38,8 @@ ifeq ($(HAL_BOARD),HAL_BOARD_LINUX)
 include $(MK_DIR)/board_linux.mk
 endif
 
-ifeq ($(HAL_BOARD),HAL_BOARD_LINUX_V2R)
-include $(MK_DIR)/board_linux_v2r.mk
+ifeq ($(HAL_BOARD),HAL_BOARD_V2R)
+include $(MK_DIR)/board_v2r.mk
 endif
 
 
