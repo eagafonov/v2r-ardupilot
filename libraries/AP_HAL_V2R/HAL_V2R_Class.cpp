@@ -45,7 +45,7 @@ HAL_V2R::HAL_V2R() :
         &utilInstance)
 {}
 
-void HAL_V2R::init(int argc,char* const argv[]) const 
+void HAL_V2R::init(int argc,char* const argv[]) const
 {
     int opt;
     /*
@@ -75,6 +75,7 @@ void HAL_V2R::init(int argc,char* const argv[]) const
     uartA->begin(115200);
     i2c->begin();
     spi->init(NULL);
+    rcout->init(NULL);
 }
 
 const HAL_V2R AP_HAL_V2R;
