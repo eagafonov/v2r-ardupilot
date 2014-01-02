@@ -1,7 +1,6 @@
 TOOLCHAIN = ARM_LINUX
 
-V2RSDK_DIR=/home/pieslice/projects/virt2real/virt2real-sdk
-CSPATH:=$(V2RSDK_DIR)/codesourcery/arm-2013.05
+CSPATH:=$(V2R_SDK_ROOT)/codesourcery/arm-2013.05
 PATH:=$(CSPATH)/bin:$(PATH)
 
 export PATH

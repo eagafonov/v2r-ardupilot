@@ -23,3 +23,6 @@ endif
 	@echo  >> $(SKETCHBOOK)/config.mk
 	@echo \# PX4NuttX tree: fill in the path to PX4NuttX repository from github.com/diydrones: >> $(SKETCHBOOK)/config.mk
 	@echo NUTTX_SRC=../PX4NuttX/nuttx >> $(SKETCHBOOK)/config.mk
+	@echo  >> $(SKETCHBOOK)/config.mk
+	@echo \# Virt2real SDK folder: >> $(SKETCHBOOK)/config.mk
+	@echo V2R_SDK_ROOT ?= virt2real-sdk >> $(SKETCHBOOK)/config.mk
