@@ -31,11 +31,11 @@ void V2RRCOutput::init(void* machtnichts)
     std::ofstream f("/dev/v2r_pins", std::ofstream::out);
 
     if (f.is_open()) {
-        f << "set con43 pwm0" << std::endl
-          << "set con44 pwm1" << std::endl
-          << "set con16 pwm2" << std::endl
-          << "set con17 pwm2" << std::endl
-          << "set con42 pwm3" << std::endl;
+        f << "set con 43 pwm0" << std::endl
+          << "set con 44 pwm1" << std::endl
+          << "set con 16 pwm2" << std::endl
+          << "set con 17 pwm2" << std::endl
+          << "set con 42 pwm3" << std::endl;
 
         f.close();
     } else {
@@ -45,15 +45,17 @@ void V2RRCOutput::init(void* machtnichts)
 }
 
 void V2RRCOutput::set_freq(uint32_t chmask, uint16_t freq_hz) {
-    log_dbg() << __PRETTY_FUNCTION__ <<	"chmask:0x" << std::hex << chmask <<	" freq:" << std::dec << freq_hz;
+//     log_dbg() << __PRETTY_FUNCTION__ <<	"chmask:0x" << std::hex << chmask <<	" freq:" << std::dec << freq_hz;
 
     int m = 1;
 
     for (int i=0; i < V2R_NUM_OUTPUT_CHANNELS; i++, m <<= 1) {
         if (chmask & m) {
-            _pwm[i].freq_hz = freq_hz;
-            _pwm[i]._period_tiks = PWM_TICKS_PER_SEC / freq_hz;
-            _pwm[i]._dirty = true;
+            if (freq_hz != _pwm[i].freq_hz) {
+                _pwm[i].freq_hz = freq_hz;
+                _pwm[i]._period_tiks = PWM_TICKS_PER_SEC / freq_hz;
+                _pwm[i]._dirty = true;
+            }
         }
     }
 }
@@ -64,7 +66,7 @@ uint16_t V2RRCOutput::get_freq(uint8_t ch) {
         return 0;
     }
 
-    log_dbg() << __PRETTY_FUNCTION__ << " ch:" << (int)ch;
+//     log_dbg() << __PRETTY_FUNCTION__ << " ch:" << (int)ch;
 
     return _pwm[ch].freq_hz;
 }
@@ -97,19 +99,21 @@ void V2RRCOutput::write(uint8_t ch, uint16_t period_us)
 
 void V2RRCOutput::_write(uint8_t ch, uint16_t period_us, bool write_to_hardware)
 {
-    log_dbg() << __PRETTY_FUNCTION__ <<	" ch:" << (int)ch << " period:" << period_us;
+//     log_dbg() << __PRETTY_FUNCTION__ <<	" ch:" << (int)ch << " period:" << period_us;
 
     if (ch >= V2R_NUM_OUTPUT_CHANNELS) {
         log_err() << "V2RRCOutput::write invalid channel " << ch;
         return;
     }
 
-    _pwm[ch].period_us = period_us;
-    _pwm[ch]._duty_tiks = period_us * PWM_TICKS_PER_MICROSEC;
-    _pwm[ch]._dirty = true;
+    if (_pwm[ch].period_us != period_us) {
+        _pwm[ch].period_us = period_us;
+        _pwm[ch]._duty_tiks = period_us * PWM_TICKS_PER_MICROSEC;
+        _pwm[ch]._dirty = true;
 
-    if (write_to_hardware) {
-        _pwm[ch]._write_pwm(ch);
+        if (write_to_hardware) {
+            _pwm[ch]._write_pwm(ch);
+        }
     }
 }
 
@@ -125,10 +129,10 @@ void V2RRCOutput::write(uint8_t ch, uint16_t* period_us, uint8_t len)
 }
 
 uint16_t V2RRCOutput::read(uint8_t ch) {
-    log_dbg() << __PRETTY_FUNCTION__;
+//     log_dbg() << __PRETTY_FUNCTION__;
 
     if (ch >= V2R_NUM_OUTPUT_CHANNELS) {
-        log_err() << "V2RRCOutput::read invalid channel " << ch;
+//         log_err() << "V2RRCOutput::read invalid channel " << ch;
         return 0;
     }
 
@@ -137,7 +141,11 @@ uint16_t V2RRCOutput::read(uint8_t ch) {
 
 void V2RRCOutput::read(uint16_t* period_us, uint8_t len)
 {
-    log_dbg() << __PRETTY_FUNCTION__;
+//     log_dbg() << __PRETTY_FUNCTION__ << " " << (int)len;
+
+    for (int i = 0; i < len; i++) {
+        period_us[i] = read(i);
+    }
 }
 
 
@@ -153,12 +161,14 @@ void V2RRCOutput::_write_pwm()
 
 void V2RRCOutput::pwm_info::_write_pwm(int channel)
 {
-    log_dbg() << "PWM ch:" << channel << " duty:" << _duty_tiks << " period:"<< _period_tiks;
+//     log_dbg() << "PWM ch:" << channel << " duty:" << _duty_tiks << " period:"<< _period_tiks;
 
+    // TODO Use ioctl or open file once
     std::ofstream f("/dev/v2r_pins", std::ofstream::out);
 
     if (f.is_open()) {
-        f << "set pwm" << channel << " duty:" << _duty_tiks	<< " period:" << _period_tiks;
+        // echo "set pwm <no_pwm> <duty> <period>" > /dev/v2r_pins
+        f << "set pwm " << channel << " " << _duty_tiks	<< " " << _period_tiks;
         f.close();
     } else {
         log_err() << "Failed to open /dev/v2r_pins to write";
