@@ -200,6 +200,8 @@ static DataFlash_SITL DataFlash;
 static DataFlash_File DataFlash("/fs/microsd/APM/logs");
 #elif CONFIG_HAL_BOARD == HAL_BOARD_LINUX
 static DataFlash_File DataFlash("logs");
+#elif CONFIG_HAL_BOARD == HAL_BOARD_V2R
+static DataFlash_File DataFlash("logs");
 #else
 static DataFlash_Empty DataFlash;
 #endif
