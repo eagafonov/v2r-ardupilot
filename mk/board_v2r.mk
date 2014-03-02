@@ -88,8 +88,13 @@ ALLDEPS			=	$(ALLOBJS:%.o=%.d)
 
 all: $(SKETCHELF)
 
-upload: $(SKETCHELF)
+
+$(SKETCHELF).timestamp-upload: $(SKETCHELF)
 	scp $(SKETCHELF) v2r:
+	touch $@
+
+upload: $(SKETCHELF).timestamp-upload
+
 
 print-%:
 	echo "$*=$($*)"
