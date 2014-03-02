@@ -271,6 +271,8 @@ static AP_Baro_MS5611 barometer(&AP_Baro_MS5611::i2c);
    #else
     #error Unrecognized CONFIG_MS5611_SERIAL setting.
    #endif
+  #elif CONFIG_BARO == AP_BARO_NONE
+static AP_Baro_None barometer;
   #endif
 
  #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
@@ -762,7 +764,14 @@ static float G_Dt = 0.02;
 ////////////////////////////////////////////////////////////////////////////////
 // Inertial Navigation
 ////////////////////////////////////////////////////////////////////////////////
-static AP_InertialNav inertial_nav(&ahrs, &barometer, g_gps, gps_glitch);
+#if CONFIG_BARO == AP_BARO_NONE
+#define P_BAROMETER &barometer
+#else
+#define P_BAROMETER 0
+#endif
+
+static AP_InertialNav inertial_nav(&ahrs, P_BAROMETER, g_gps, gps_glitch);
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Waypoint navigation object

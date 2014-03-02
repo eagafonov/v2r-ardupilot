@@ -24,6 +24,9 @@
 #include <AP_HAL_FLYMAPLE.h>
 #include <AP_HAL_Linux.h>
 #include <AP_HAL_Empty.h>
+#include <AP_HAL_V2R.h>
+
+#include <logger.h>
 
 /* Build this example sketch only for the APM1. */
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;

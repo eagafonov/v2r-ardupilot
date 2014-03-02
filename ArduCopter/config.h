@@ -90,7 +90,7 @@
  # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
 #elif CONFIG_HAL_BOARD == HAL_BOARD_V2R
  # define CONFIG_IMU_TYPE CONFIG_IMU_MPU6050
- # define CONFIG_BARO AP_BARO_BMP085
+ # define CONFIG_BARO AP_BARO_NONE
  # define CONFIG_COMPASS  AP_COMPASS_HMC5843
  # define CONFIG_ADC        DISABLED
  # define MAGNETOMETER ENABLED
@@ -120,7 +120,7 @@
   # define RATE_PITCH_D                 0
   # define HELI_PITCH_FF                0
   # define HELI_ROLL_FF                 0
-  # define HELI_YAW_FF                  0  
+  # define HELI_YAW_FF                  0
   # define STABILIZE_THR                THROTTLE_MANUAL_HELI
   # define MPU6K_FILTER                 10
   # define HELI_STAB_COLLECTIVE_MIN_DEFAULT   0
@@ -565,7 +565,7 @@
 // AUTO Mode
 // Note: Auto mode yaw behaviour is controlled by WP_YAW_BEHAVIOR parameter
 #ifndef WP_YAW_BEHAVIOR_DEFAULT
- # define WP_YAW_BEHAVIOR_DEFAULT   WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP_EXCEPT_RTL     
+ # define WP_YAW_BEHAVIOR_DEFAULT   WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP_EXCEPT_RTL
 #endif
 
 #ifndef AUTO_RP
