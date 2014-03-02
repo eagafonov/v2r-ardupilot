@@ -80,24 +80,23 @@ void V2RScheduler::init(void* machtnichts)
 
 void V2RScheduler::_microsleep(uint32_t usec)
 {
-    struct timespec ts;
-    ts.tv_sec = 0;
-    ts.tv_nsec = usec*1000UL;
-    while (nanosleep(&ts, &ts) == -1 && errno == EINTR) ;
+    usleep(usec);
 }
 
 void V2RScheduler::delay(uint16_t ms)
 {
-    uint32_t start = millis();
-    
-    while ((millis() - start) < ms) {
-        // this yields the CPU to other apps
-        _microsleep(1000);
-        if (_min_delay_cb_ms <= ms) {
-            if (_delay_cb) {
+    if (_delay_cb) {
+        uint32_t start = millis();
+
+        while ((millis() - start) < ms) {
+            // this yields the CPU to other apps
+            _microsleep(1000);
+            if (_min_delay_cb_ms <= ms) {
                 _delay_cb();
             }
         }
+    } else {
+        _microsleep(ms * 1000);
     }
 }
 
