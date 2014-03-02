@@ -7,6 +7,7 @@
 #include <AP_HAL.h>
 #include <AP_Notify.h>
 #include "GPS.h"
+#include <logger.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -51,8 +52,14 @@ GPS::update(void)
     bool result;
     uint32_t tnow;
 
-    // call the GPS driver to process incoming data
-    result = read();
+    if (!_port->is_initialized()) {
+        log_wrn() << "[GPS] UART is not initialized";
+        hal.scheduler->delay(10);
+        result = false;
+    } else {
+        // call the GPS driver to process incoming data
+        result = read();
+    }
 
     tnow = hal.scheduler->millis();
 
