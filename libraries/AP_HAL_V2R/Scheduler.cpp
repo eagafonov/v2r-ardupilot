@@ -1,4 +1,5 @@
 #include <AP_HAL.h>
+#include <unistd.h>
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_V2R
 
@@ -13,6 +14,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <sys/mman.h>
+#include <sys/prctl.h>
 
 using namespace V2R;
 
@@ -212,6 +214,8 @@ void V2RScheduler::_run_timers(bool called_from_timer_thread)
 
 void *V2RScheduler::_timer_thread(void)
 {
+    prctl(PR_SET_NAME,"ArduPilot timer thread",0,0,0);
+
     _setup_realtime(32768);
     while (system_initializing()) {
         poll(NULL, 0, 1);        
@@ -247,6 +251,8 @@ void V2RScheduler::_run_io(void)
 
 void *V2RScheduler::_uart_thread(void)
 {
+    prctl(PR_SET_NAME,"ArduPilot uart thread",0,0,0);
+    
     _setup_realtime(32768);
     while (system_initializing()) {
         poll(NULL, 0, 1);
@@ -268,6 +274,8 @@ void *V2RScheduler::_uart_thread(void)
 
 void *V2RScheduler::_io_thread(void)
 {
+    prctl(PR_SET_NAME,"ArduPilot IO thread",0,0,0);
+
     _setup_realtime(32768);
     while (system_initializing()) {
         poll(NULL, 0, 1);        
