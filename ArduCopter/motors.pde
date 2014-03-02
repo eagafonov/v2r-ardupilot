@@ -4,6 +4,7 @@
 #define DISARM_DELAY            20  // called at 10hz so 2 seconds
 #define AUTO_TRIM_DELAY         100 // called at 10hz so 10 seconds
 #define AUTO_DISARMING_DELAY    15  // called at 1hz so 15 seconds
+#include <logger.h>
 
 // arm_motors_check - checks for pilot input to arm or disarm the copter
 // called at 10hz
@@ -34,13 +35,13 @@ static void arm_motors_check()
         return;
     }
 
-    #if FRAME_CONFIG == HELI_FRAME
+#if FRAME_CONFIG == HELI_FRAME
     // heli specific arming check
-    if (!motors.allow_arming()){
+    if (!motors.allow_arming()) {
         arming_counter = 0;
         return;
     }
-    #endif  // HELI_FRAME
+#endif  // HELI_FRAME
 
     int16_t tmp = g.rc_4.control_in;
 
@@ -56,9 +57,15 @@ static void arm_motors_check()
         if (arming_counter == ARM_DELAY && !motors.armed()) {
             // run pre-arm-checks and display failures
             pre_arm_checks(true);
-            if(ap.pre_arm_check && arm_checks(true)) {
-                init_arm_motors();
-            }else{
+            if(ap.pre_arm_check) {
+                if (arm_checks(true)) {
+                    init_arm_motors();
+                } else {
+                    log_inf() << "arm checks fail";
+                    arming_counter = 0;
+                }
+            } else {
+                log_inf() << "pre-arm checks fail";
                 // reset arming counter if pre-arm checks fail
                 arming_counter = 0;
             }
@@ -69,8 +76,8 @@ static void arm_motors_check()
             auto_trim_counter = 250;
         }
 
-    // full left
-    }else if (tmp < -4000) {
+        // full left
+    } else if (tmp < -4000) {
 
         // increase the counter to a maximum of 1 beyond the disarm delay
         if( arming_counter <= DISARM_DELAY ) {
@@ -82,8 +89,8 @@ static void arm_motors_check()
             init_disarm_motors();
         }
 
-    // Yaw is centered so reset arming counter
-    }else{
+        // Yaw is centered so reset arming counter
+    } else {
         arming_counter = 0;
     }
 }
@@ -108,7 +115,7 @@ static void auto_disarm_check()
             init_disarm_motors();
             auto_disarming_counter = 0;
         }
-    }else{
+    } else {
         auto_disarming_counter = 0;
     }
 }
@@ -116,7 +123,7 @@ static void auto_disarm_check()
 // init_arm_motors - performs arming process including initialisation of barometer and gyros
 static void init_arm_motors()
 {
-	// arming marker
+    // arming marker
     // Flag used to track if we have armed the motors the first time.
     // This is used to decide if we should run the ground_start routine
     // which calibrates the IMU
@@ -488,7 +495,7 @@ static void init_disarm_motors()
 
     // we are not in the air
     set_takeoff_complete(false);
-    
+
     // setup fast AHRS gains to get right attitude
     ahrs.set_fast_gains(true);
 
