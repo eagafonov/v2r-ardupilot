@@ -11,8 +11,10 @@
 
 using namespace V2R;
 
+V2RUARTDriver uartConsole(true);
+
 // 3 serial ports on V2R for now
-static V2RUARTDriver uartADriver(true);
+static V2RUARTDriver uartADriver(false);
 static V2RUARTDriver uartBDriver(false);
 static V2RUARTDriver uartCDriver(false);
 
@@ -37,7 +39,7 @@ HAL_V2R::HAL_V2R() :
         &spiDeviceManager,
         &analogIn,
         &storageDriver,
-        &uartADriver,
+        &uartConsole,
         &gpioDriver,
         &rcinDriver,
         &rcoutDriver,
@@ -73,6 +75,10 @@ void HAL_V2R::init(int argc,char* const argv[]) const
 
     scheduler->init(NULL);
     uartA->begin(115200);
+    uartB->begin(115200);
+    uartC->begin(115200);
+    uartConsole.begin(115200);
+    uartConsole.set_blocking_writes(false); // non-blocking for console
     i2c->begin();
     spi->init(NULL);
     rcout->init(NULL);

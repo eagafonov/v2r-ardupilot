@@ -17,6 +17,7 @@
 using namespace V2R;
 
 extern const AP_HAL::HAL& hal;
+extern V2RUARTDriver uartConsole;
 
 #define APM_V2R_TIMER_PRIORITY    13
 #define APM_V2R_UART_PRIORITY     12
@@ -249,7 +250,9 @@ void *V2RScheduler::_uart_thread(void)
 {
     _setup_realtime(32768);
     while (system_initializing()) {
-        poll(NULL, 0, 1);        
+        poll(NULL, 0, 1);
+        // we still need to pump console messages
+        uartConsole._timer_tick();
     }
     while (true) {
         _microsleep(10000);
@@ -258,6 +261,8 @@ void *V2RScheduler::_uart_thread(void)
         ((V2RUARTDriver *)hal.uartA)->_timer_tick();
         ((V2RUARTDriver *)hal.uartB)->_timer_tick();
         ((V2RUARTDriver *)hal.uartC)->_timer_tick();
+
+        uartConsole._timer_tick();
     }
     return NULL;
 }
