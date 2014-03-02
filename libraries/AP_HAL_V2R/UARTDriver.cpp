@@ -16,6 +16,10 @@
 #include <assert.h>
 #include <sys/ioctl.h>
 
+#include <arpa/inet.h>
+
+#include <logger.h>
+
 extern const AP_HAL::HAL& hal;
 
 using namespace V2R;
@@ -43,12 +47,38 @@ void V2RUARTDriver::set_device_path(const char *path)
 /*
   open the tty
  */
-void V2RUARTDriver::begin(uint32_t b) 
+void V2RUARTDriver::begin(uint32_t b)
 {
     begin(b, 0, 0);
 }
 
-void V2RUARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS) 
+bool parse_host_port(const char *host_port, std::string &out_host, int& out_port) {
+    std::string s(host_port);
+
+    size_t pos = s.find(':');
+
+    if (pos == std::string::npos || pos == 0) {
+        return false;
+    }
+
+    std::string s_port(s.substr(pos+1));
+    std::stringstream ss(s_port);
+    int port = 0;
+
+    ss >> port;
+
+    if (port <= 0 || port > 65535) {
+        log_err() << "Invalid port value " << ss.str();
+        return false;
+    }
+
+    out_port = port;
+    out_host = s.substr(0, pos);
+
+    return true;
+};
+
+void V2RUARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
 {
     if (device_path == NULL && _console) {
         _rd_fd = 0;
@@ -62,8 +92,54 @@ void V2RUARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
             return;
         }
         uint8_t retries = 0;
+
         while (retries < 5) {
-            _rd_fd = open(device_path, O_RDWR);
+
+            // Parse string 'udp:addr:port'
+
+            if (strncmp(device_path, "udp:", 4) == 0) {
+                const char *ip_addr_port = device_path + 4;
+
+                std::string remote_host;
+                int remote_port;
+
+                if (!parse_host_port(ip_addr_port, remote_host, remote_port)) {
+                    log_err() << "Failed to parse IP host:port from string '" << ip_addr_port << "'";
+                    return;
+                }
+
+
+                log_dbg() << "Open UDP link host:" << remote_host << " port:" << remote_port;
+
+                _rd_fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+                if (_rd_fd < 0) {
+                    continue;
+                };
+
+                struct sockaddr_in serv_addr;
+                memset(&serv_addr, '0', sizeof(serv_addr));
+
+                serv_addr.sin_family = AF_INET;
+                serv_addr.sin_port = htons(remote_port);
+
+                if(inet_pton(AF_INET, remote_host.c_str(), &serv_addr.sin_addr)<=0)
+                {
+                    log_err() << "Can't get IP from " << remote_host;  
+                    return;
+                }
+
+                if( connect(_rd_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+                {
+                    log_wrn() << "Faile to connect UDP";
+                    continue;
+                }
+            } else {
+                log_dbg() << "Open file " << device_path;
+
+                _rd_fd = open(device_path, O_RDWR);
+            }
+
             if (_rd_fd != -1) {
                 break;
             }
@@ -80,7 +156,7 @@ void V2RUARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
             return;
         }
         if (retries != 0) {
-            fprintf(stdout, "WARNING: took %u retries to open UART %s\n", 
+            fprintf(stdout, "WARNING: took %u retries to open UART %s\n",
                     (unsigned)retries, device_path);
             return;
         }
@@ -88,7 +164,7 @@ void V2RUARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
         // always run the file descriptor non-blocking, and deal with
         // blocking IO in the higher level calls
         fcntl(_rd_fd, F_SETFL, fcntl(_rd_fd, F_GETFL, 0) | O_NONBLOCK);
-        
+
         if (rxS < 1024) {
             rxS = 1024;
         }
@@ -148,7 +224,7 @@ void V2RUARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
 /*
   shutdown a UART
  */
-void V2RUARTDriver::end() 
+void V2RUARTDriver::end()
 {
     _initialised = false;
     while (_in_timer) hal.scheduler->delay(1);
@@ -173,7 +249,7 @@ void V2RUARTDriver::end()
 }
 
 
-void V2RUARTDriver::flush() 
+void V2RUARTDriver::flush()
 {
     // we are not doing any buffering, so flush is a no-op
 }
@@ -182,7 +258,7 @@ void V2RUARTDriver::flush()
 /*
   return true if the UART is initialised
  */
-bool V2RUARTDriver::is_initialized() 
+bool V2RUARTDriver::is_initialized()
 {
     return _initialised;
 }
@@ -191,7 +267,7 @@ bool V2RUARTDriver::is_initialized()
 /*
   enable or disable blocking writes
  */
-void V2RUARTDriver::set_blocking_writes(bool blocking) 
+void V2RUARTDriver::set_blocking_writes(bool blocking)
 {
     _nonblocking_writes = !blocking;
 }
@@ -209,16 +285,16 @@ void V2RUARTDriver::set_blocking_writes(bool blocking)
 /*
   do we have any bytes pending transmission?
  */
-bool V2RUARTDriver::tx_pending() 
-{ 
+bool V2RUARTDriver::tx_pending()
+{
     return !BUF_EMPTY(_writebuf);
 }
 
 /*
   return the number of bytes available to be read
  */
-int16_t V2RUARTDriver::available() 
-{ 
+int16_t V2RUARTDriver::available()
+{
     if (!_initialised) {
         return 0;
     }
@@ -229,8 +305,8 @@ int16_t V2RUARTDriver::available()
 /*
   how many bytes are available in the output buffer?
  */
-int16_t V2RUARTDriver::txspace() 
-{ 
+int16_t V2RUARTDriver::txspace()
+{
     if (!_initialised) {
         return 0;
     }
@@ -238,8 +314,8 @@ int16_t V2RUARTDriver::txspace()
     return BUF_SPACE(_writebuf);
 }
 
-int16_t V2RUARTDriver::read() 
-{ 
+int16_t V2RUARTDriver::read()
+{
     uint8_t c;
     if (!_initialised || _readbuf == NULL) {
         return -1;
@@ -253,11 +329,12 @@ int16_t V2RUARTDriver::read()
 }
 
 /* V2R implementations of Print virtual methods */
-size_t V2RUARTDriver::write(uint8_t c) 
-{ 
+size_t V2RUARTDriver::write(uint8_t c)
+{
     if (!_initialised) {
         return 0;
     }
+
     uint16_t _head;
 
     while (BUF_SPACE(_writebuf) == 0) {
@@ -279,6 +356,7 @@ size_t V2RUARTDriver::write(const uint8_t *buffer, size_t size)
     if (!_initialised) {
         return 0;
     }
+
     if (!_nonblocking_writes) {
         /*
           use the per-byte delay loop in write() above for blocking writes
@@ -319,7 +397,7 @@ size_t V2RUARTDriver::write(const uint8_t *buffer, size_t size)
         assert(_writebuf_tail+n <= _writebuf_size);
         memcpy(&_writebuf[_writebuf_tail], buffer, n);
         BUF_ADVANCETAIL(_writebuf, n);
-    }        
+    }
     return size;
 }
 
@@ -364,7 +442,7 @@ int V2RUARTDriver::_read_fd(uint8_t *buf, uint16_t n)
 /*
   push any pending bytes to/from the serial port. This is called at
   1kHz in the timer thread. Doing it this way reduces the system call
-  overhead in the main task enormously. 
+  overhead in the main task enormously.
  */
 void V2RUARTDriver::_timer_tick(void)
 {
@@ -386,7 +464,7 @@ void V2RUARTDriver::_timer_tick(void)
             uint16_t n1 = _writebuf_size - _writebuf_head;
             int ret = _write_fd(&_writebuf[_writebuf_head], n1);
             if (ret == n1 && n != n1) {
-                _write_fd(&_writebuf[_writebuf_head], n - n1);                
+                _write_fd(&_writebuf[_writebuf_head], n - n1);
             }
         }
     }
@@ -405,7 +483,7 @@ void V2RUARTDriver::_timer_tick(void)
             int ret = _read_fd(&_readbuf[_readbuf_tail], n1);
             if (ret == n1 && n != n1) {
                 assert(_readbuf_tail+(n-n1) <= _readbuf_size);
-                _read_fd(&_readbuf[_readbuf_tail], n - n1);                
+                _read_fd(&_readbuf[_readbuf_tail], n - n1);
             }
         }
     }
