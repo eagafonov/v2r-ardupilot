@@ -66,7 +66,11 @@ void loop()
     int value;
 
     // display help
-    hal.console->println("Press 't' to test motors.  Be careful they will spin!");
+    hal.console->println("\n\nPress 't' to test motors.  Be careful they will spin!");
+    hal.console->println("Press 1-8 to test specific motor");
+    hal.console->println("Press 'q' to quit!");
+
+    hal.console->println("\nBe careful they will spin!");
 
     // wait for user to enter something
     while( !hal.console->available() ) {
@@ -83,6 +87,23 @@ void loop()
         motors.output_test();
         motors.armed(false);
         hal.console->println("finished test.");
+    }
+
+    // test each motors
+    if( value >= '1' && value <= '9') {
+        uint8_t motor_num = value - '1';
+
+        log_inf() << "testing motor #" << (int)motor_num; 
+        motors.armed(true);
+        motors.output_test(motor_num);
+        motors.armed(false);
+//         hal.scheduler->delay(300);
+    }
+
+    if (value == 'q' || value == 'Q') {
+
+
+        exit(1);
     }
 }
 

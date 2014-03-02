@@ -20,6 +20,7 @@
  *
  */
 #include <AP_HAL.h>
+#include <logger.h>
 #include "AP_MotorsMatrix.h"
 
 extern const AP_HAL::HAL& hal;
@@ -355,6 +356,7 @@ void AP_MotorsMatrix::output_test()
     for( i=min_order; i<=max_order; i++ ) {
         for( j=0; j<AP_MOTORS_MAX_NUM_MOTORS; j++ ) {
             if( motor_enabled[j] && _test_order[j] == i ) {
+                log_dbg() << "[TEST] run motor #" << (int)(j + 1);
                 // turn on this motor and wait 1/3rd of a second
                 hal.rcout->write(_motor_to_channel_map[j], _rc_throttle->radio_min + _min_throttle);
                 hal.scheduler->delay(300);
@@ -362,6 +364,30 @@ void AP_MotorsMatrix::output_test()
                 hal.scheduler->delay(2000);
             }
         }
+    }
+
+    // shut down all motors
+    output_min();
+}
+
+void AP_MotorsMatrix::output_test(int8_t motor_num)
+{
+    if (motor_num < 0 || motor_num >= AP_MOTORS_MAX_NUM_MOTORS) {
+        log_err() << "Invalid motor num " << (int) motor_num;
+        return;
+    }
+    // shut down all motors
+    output_min();
+
+    if( motor_enabled[motor_num]) {
+        log_dbg() << "[MOTOR] #" << (int)(motor_num + 1) << " " << ((_yaw_factor[motor_num] > 0) ? "CCW" : "CW");
+
+        // turn on this motor and wait 1/3rd of a second
+        hal.rcout->write(_motor_to_channel_map[motor_num], _rc_throttle->radio_min + _min_throttle);
+        hal.scheduler->delay(300);
+        hal.rcout->write(_motor_to_channel_map[motor_num], _rc_throttle->radio_min);
+    } else {
+        log_wrn() << "Motor " << (int) motor_num << " is disabled";
     }
 
     // shut down all motors
