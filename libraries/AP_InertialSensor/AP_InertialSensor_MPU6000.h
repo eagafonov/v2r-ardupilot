@@ -28,6 +28,9 @@
 // Set to 1 if MPU6050 Int pin it connected
 #define MPU6000_DATA_READY 0
 
+// Define the hack 
+#define APM_ACCEL_X_Y_SWAP
+
 class AP_InertialSensor_MPU6000 : public AP_InertialSensor
 {
 public:
