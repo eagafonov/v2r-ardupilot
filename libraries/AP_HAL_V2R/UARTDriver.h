@@ -1,6 +1,6 @@
 
-#ifndef __AP_HAL_V2R_UARTDRIVER_H__
-#define __AP_HAL_V2R_UARTDRIVER_H__
+#ifndef __AP_HAL_LINUX_UARTDRIVER_H__
+#define __AP_HAL_LINUX_UARTDRIVER_H__
 
 #include <AP_HAL_V2R.h>
 
@@ -58,4 +58,4 @@ private:
     uint64_t _last_write_time;
 };
 
-#endif // __AP_HAL_V2R_UARTDRIVER_H__
+#endif // __AP_HAL_LINUX_UARTDRIVER_H__
