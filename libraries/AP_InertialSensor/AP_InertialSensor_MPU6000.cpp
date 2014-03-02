@@ -57,6 +57,7 @@ extern const AP_HAL::HAL& hal;
 #define MPUREG_INT_PIN_CFG                              0x37
 #       define BIT_INT_RD_CLEAR                                 0x10    // clear the interrupt when any read occurs
 #       define BIT_LATCH_INT_EN                                 0x20    // latch data ready pin 
+#       define BIT_I2C_BYPASS_EN                                0x02    // i2c Bypass enabled 
 #define MPUREG_INT_ENABLE                               0x38
 // bit definitions for MPUREG_INT_ENABLE
 #       define BIT_RAW_RDY_EN                                   0x01
@@ -614,7 +615,7 @@ bool AP_InertialSensor_MPU6000::_hardware_init(Sample_rate sample_rate)
 
     // clear interrupt on any read, and hold the data ready pin high
     // until we clear the interrupt
-    _register_write(MPUREG_INT_PIN_CFG, BIT_INT_RD_CLEAR | BIT_LATCH_INT_EN);
+    _register_write(MPUREG_INT_PIN_CFG, BIT_INT_RD_CLEAR | BIT_LATCH_INT_EN | BIT_I2C_BYPASS_EN);
 
     // now that we have initialised, we set the SPI bus speed to high
     // (8MHz on APM2)
