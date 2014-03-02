@@ -13,7 +13,9 @@
 #include <AP_HAL_AVR.h>
 #include <AP_HAL_AVR_SITL.h>
 #include <AP_HAL_Empty.h>
+#include <AP_HAL_V2R.h>
 #include <AP_Notify.h>
+#include <logger.h>
 
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 
@@ -43,7 +45,7 @@ const uint8_t sirf_to_nmea[] = { 0xa0, 0xa2, // preamble
 void setup()
 {
     hal.console->println_P(PSTR("GPS_NMEA library test"));
-    hal.uartB->begin(38400);
+    hal.uartB->begin(9600);
 
     // try to coerce a SiRF unit that's been traumatized by
     // AP_GPS_AUTO back into NMEA mode so that we can test
@@ -51,11 +53,16 @@ void setup()
     for (uint8_t i = 0; i < sizeof(sirf_to_nmea); i++)
         hal.uartB->write(sirf_to_nmea[i]);
 
+    hal.console->println_P(PSTR("GPS init"));
     gps->init(hal.uartB);
+    hal.console->println_P(PSTR("GPS done"));
 }
 
 void loop()
 {
+    hal.scheduler->delay(1000);
+//     return;
+
     gps->update();
     if (gps->new_data) {
         if (gps->fix) {
