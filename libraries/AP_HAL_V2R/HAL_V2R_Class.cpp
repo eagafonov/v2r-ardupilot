@@ -58,9 +58,12 @@ void HAL_V2R::init(int argc,char* const argv[]) const
         case 'A':
             uartADriver.set_device_path(optarg);
             break;
-        case 'B':
+// Port B is always UART1
+#if 0
+         case 'B':
             uartBDriver.set_device_path(optarg);
             break;
+#endif
         case 'C':
             uartCDriver.set_device_path(optarg);
             break;
@@ -72,6 +75,8 @@ void HAL_V2R::init(int argc,char* const argv[]) const
             exit(1);
         }
     }
+
+    uartBDriver.set_device_path("/dev/ttyS1"); // Port B is always UART1
 
     scheduler->init(NULL);
     uartA->begin(115200);
