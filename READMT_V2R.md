@@ -3,7 +3,7 @@
 Magic makefiles is trying to upload fresh ELF to remote host name `v2r` using scp. 
 To let this magic works you need setup you virt2real and build host a bit.
 
-First of all make sure virt2real is connected to same netwrok as build host 
+First of all make sure virt2real is connected to same network as build host 
 and you are able to connect to virt2real w/o password promt.
 
 See wiki how to do it (Vir2real networking)<http://wiki.virt2real.ru/wiki/%D0%9F%D0%BE%D0%B4%D0%BA%D0%BB%D1%8E%D1%87%D0%B5%D0%BD%D0%B8%D0%B5_%D0%BA_%D0%BB%D0%BE%D0%BA%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B9_%D1%81%D0%B5%D1%82%D0%B8>
