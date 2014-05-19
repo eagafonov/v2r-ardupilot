@@ -7,7 +7,7 @@
 static bool in_mavlink_delay;
 
 // true when we have received at least 1 MAVLink packet
-static bool mavlink_active;
+bool GCS_MAVLINK::mavlink_active = false;
 
 // true if we are out of time in our event timeslice
 static bool	gcs_out_of_time;

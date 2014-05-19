@@ -979,6 +979,33 @@ static void perf_update(void)
 
 void loop()
 {
+#if CLI_ENABLED == ENABLED
+        /* allow CLI to be started by hitting enter 3 times, if no
+         *  heartbeat packets have been received */
+
+        if (GCS_MAVLINK::mavlink_active == 0 && hal.console->available()) {
+            // this allows us to detect the user wanting the CLI to start
+            static uint8_t crlf_count = 0;
+
+            int  c;
+            while ((c = hal.console->read()) > 0) {
+                if (c == '\n' || c == '\r') {
+                    crlf_count++;
+                } else {
+                    crlf_count = 0;
+                }
+
+                log_dbg() << "[CLI] Hit count " << (int)crlf_count;
+            }
+
+            if (crlf_count == 3) {
+                log_inf() << "[CLI] Launch menu";
+                run_cli(hal.console);
+            }
+        }
+#endif
+
+
     // wait for an INS sample
     if (!ins.wait_for_sample(1000)) {
         Log_Write_Error(ERROR_SUBSYSTEM_MAIN, ERROR_CODE_MAIN_INS_DELAY);

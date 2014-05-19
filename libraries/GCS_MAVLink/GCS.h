@@ -178,6 +178,7 @@ public:
 
     uint32_t        last_heartbeat_time; // milliseconds
 
+    static bool mavlink_active;
 private:
     void        handleMessage(mavlink_message_t * msg);
 
@@ -274,7 +275,6 @@ private:
     void handle_log_send(DataFlash_Class &dataflash);
     void handle_log_send_listing(DataFlash_Class &dataflash);
     void handle_log_send_data(DataFlash_Class &dataflash);
-
 };
 
 #endif // __GCS_H
