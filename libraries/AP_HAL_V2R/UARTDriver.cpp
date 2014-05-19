@@ -198,9 +198,13 @@ void V2RUARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
         if (_readbuf != NULL) {
             free(_readbuf);
         }
-        _readbuf = (uint8_t *)malloc(_readbuf_size);
+
+        _readbuf = (uint8_t *)malloc(_readbuf_size + sizeof(int));
         _readbuf_head = 0;
         _readbuf_tail = 0;
+
+        _readbuf_guard = (uint32_t*)(_readbuf + _readbuf_size);
+        *_readbuf_guard = 0xDEADBEAF;
     }
 
     /*
@@ -433,7 +437,14 @@ int V2RUARTDriver::_read_fd(uint8_t *buf, uint16_t n)
     int ret;
     ret = ::read(_rd_fd, buf, n);
     if (ret > 0) {
+//         std::cerr << std::endl 
+//                     << "[UART] _read_fd n:" << n
+//                     << " got:" << ret 
+//                     << " tail:" <<  _readbuf_tail;
+
         BUF_ADVANCETAIL(_readbuf, ret);
+
+//         std::cerr << "->" <<  _readbuf_tail << std::endl;
     }
     return ret;
 }
@@ -477,13 +488,58 @@ void V2RUARTDriver::_timer_tick(void)
             // one read will do
             assert(_readbuf_tail+n <= _readbuf_size);
             _read_fd(&_readbuf[_readbuf_tail], n);
+//             if (*_readbuf_guard != 0xDEADBEAF) {
+//                 std::cerr << "[UART] Buffer overrun 1" << std::endl;
+//             }
+
+            assert(*_readbuf_guard == 0xDEADBEAF);
         } else {
             uint16_t n1 = _readbuf_size - _readbuf_tail;
+
+            if (_head == 0) {
+                n1--;
+            }
+
             assert(_readbuf_tail+n1 <= _readbuf_size);
             int ret = _read_fd(&_readbuf[_readbuf_tail], n1);
+
+//             if (_rd_fd && (ret > 0)) {
+//                 std::cerr << "[UART] Read 2 " << _rd_fd << " h:" << _head << " n:" << n << " n1:" << n1 << " ret:" << ret << std::endl;
+//             }
+
+//             if (*_readbuf_guard != 0xDEADBEAF) {
+//                 std::cerr << "[UART] Buffer overrun 2 " << n << " " << n1 << std::endl;
+//             }
+
+            assert(*_readbuf_guard == 0xDEADBEAF);
+
             if (ret == n1 && n != n1) {
                 assert(_readbuf_tail+(n-n1) <= _readbuf_size);
-                _read_fd(&_readbuf[_readbuf_tail], n - n1);
+
+                int read_size = n - n1;
+//                 std::cerr << "[UART] Read 3.1 fd#"<< _rd_fd 
+//                         << " buffer:" << _readbuf_size 
+//                         << " space:" << n 
+//                         << " slice:" << n1 
+//                         << " ret:" << ret 
+//                         << " read_size:" << read_size
+//                         << " head:" << _readbuf_head
+//                         << " tail:" << _readbuf_tail
+//                         << std::endl;
+
+                assert(read_size > 0);
+
+                ret = _read_fd(&_readbuf[_readbuf_tail], read_size);
+
+//                 if (_rd_fd) {
+//                     std::cerr << "[UART] Read 3.2 fd#" << _rd_fd << " buffer:" << _readbuf_size << " space:" << n << " slice:" << n1 << " read_size:" << read_size << " ret:" << ret << std::endl;
+//                 }
+
+//                 if (*_readbuf_guard != 0xDEADBEAF) {
+//                     std::cerr << "[UART] Buffer overrun 3 " << n <<	" " << n1 << std::endl;
+//                 }
+
+                assert(*_readbuf_guard == 0xDEADBEAF);
             }
         }
     }

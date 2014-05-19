@@ -42,6 +42,7 @@ private:
     // of ::read() and ::write() in the main loop
     uint8_t *_readbuf;
     uint16_t _readbuf_size;
+    uint32_t *_readbuf_guard;
 
     // _head is where the next available data is. _tail is where new
     // data is put
