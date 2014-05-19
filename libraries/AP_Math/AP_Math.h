@@ -139,9 +139,14 @@ float pythagorous3(float a, float b, float c);
 #endif
 
 /* The following three functions used to be arduino core macros */
-#define max(a,b) ((a)>(b)?(a):(b))
-#define min(a,b) ((a)<(b)?(a):(b))
 
+inline long max(long a, long b) {
+    return ((a)>(b)?(a):(b));
+};
+
+inline long min(long a, long b) {
+    return ((a)<(b)?(a):(b));
+};
 
 #endif // AP_MATH_H
 
