@@ -226,7 +226,7 @@ void V2RScheduler::_run_timers(bool called_from_timer_thread)
 
 void *V2RScheduler::_timer_thread(void)
 {
-    prctl(PR_SET_NAME,"ArduPilot timer thread",0,0,0);
+    prctl(PR_SET_NAME,"ArduPilot timer",0,0,0);
 
     _setup_realtime(32768);
     while (system_initializing()) {
@@ -263,7 +263,7 @@ void V2RScheduler::_run_io(void)
 
 void *V2RScheduler::_uart_thread(void)
 {
-    prctl(PR_SET_NAME,"ArduPilot uart thread",0,0,0);
+    prctl(PR_SET_NAME,"ArduPilot uart",0,0,0);
     
     _setup_realtime(32768);
     while (system_initializing()) {
@@ -286,7 +286,7 @@ void *V2RScheduler::_uart_thread(void)
 
 void *V2RScheduler::_io_thread(void)
 {
-    prctl(PR_SET_NAME,"ArduPilot IO thread",0,0,0);
+    prctl(PR_SET_NAME,"ArduPilot IO",0,0,0);
 
     _setup_realtime(32768);
     while (system_initializing()) {
