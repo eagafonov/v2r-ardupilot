@@ -23,7 +23,9 @@
 #include <logger.h>
 
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
-AP_InertialSensor_MPU6000 ins;
+
+// AP_InertialSensor_MPU6000 ins;
+AP_InertialSensor_INV_MPU_IIO ins;
 
 void setup(void)
 {
@@ -36,7 +38,7 @@ void setup(void)
 #endif
 
     ins.init(AP_InertialSensor::COLD_START, 
-			 AP_InertialSensor::RATE_100HZ);
+			 AP_InertialSensor::RATE_200HZ);
 
     // display initial values
     display_offsets_and_scaling();
@@ -160,7 +162,7 @@ void run_test()
     Vector3f accel;
     Vector3f gyro;
     float length;
-	uint8_t counter = 0;
+	uint32_t counter = 0;
 
     // flush any user input
     while( hal.console->available() ) {
@@ -185,8 +187,8 @@ void run_test()
 
 		if (counter++ % 50 == 0) {
 			// display results
-			hal.console->printf_P(PSTR("Accel X:%4.2f \t Y:%4.2f \t Z:%4.2f \t len:%4.2f \t Gyro X:%4.2f \t Y:%4.2f \t Z:%4.2f\n"), 
-								  accel.x, accel.y, accel.z, length, gyro.x, gyro.y, gyro.z);
+			hal.console->printf_P(PSTR("%4d Accel X:%4.2f \t Y:%4.2f \t Z:%4.2f \t len:%4.2f \t Gyro X:%4.2f \t Y:%4.2f \t Z:%4.2f\n"), 
+								  counter, accel.x, accel.y, accel.z, length, gyro.x, gyro.y, gyro.z);
 		}
     }
 

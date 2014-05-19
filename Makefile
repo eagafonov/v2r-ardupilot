@@ -37,3 +37,6 @@ v2r_uart_console:
 v2r_rc_input:
 	make -C libraries/AP_HAL_V2R/examples/rc_input  TMPDIR=$(TMPDIR) upload
 
+inertial_nav_test:
+	make -C libraries/AP_InertialNav/examples/AP_InertialNav_test  TMPDIR=$(TMPDIR) upload
+

@@ -6,6 +6,7 @@
 #include <AP_Param.h>
 #include <AP_HAL.h>
 #include <AP_HAL_AVR.h>
+#include <AP_HAL_V2R.h>
 
 #include <AP_GPS.h>             // ArduPilot GPS library
 #include <AP_GPS_Glitch.h>      // GPS glitch protection library
@@ -27,6 +28,8 @@
 #include <GCS_MAVLink.h>
 #include <AP_Notify.h>
 
+#include <logger.h>
+
 #include <AP_InertialNav.h>
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 
@@ -34,6 +37,11 @@ const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 
 AP_InertialSensor_MPU6000 ins;
 AP_Baro_MS5611 baro(&AP_Baro_MS5611::spi);
+
+#elif CONFIG_HAL_BOARD == HAL_BOARD_V2R
+
+AP_InertialSensor_INV_MPU_IIO ins;
+AP_Baro_BMP085 baro;
 
 #else
 
@@ -85,9 +93,13 @@ void loop(void)
     float dx =  inertialnav.get_latitude_diff();
     float dy =  inertialnav.get_longitude_diff();
 
+
+    float alt = inertialnav.get_altitude();
+    float climb = inertialnav.get_velocity_z();
+
     hal.console->printf_P(
-            PSTR("inertial nav pos: (%f,%f)\r\n"),
-            dx, dy);
+            PSTR("inertial nav pos: (%f,%f) alt:%f %f\r\n"),
+            dx, dy, alt, climb);
 }
 
 AP_HAL_MAIN();

@@ -26,7 +26,8 @@ const float AP_InertialSensor_INV_MPU_IIO::_gyro_scale = (0.0174532f / 16.4f);
 
 AP_InertialSensor_INV_MPU_IIO::AP_InertialSensor_INV_MPU_IIO() : 
 	AP_InertialSensor(),
-    _initialised(false)
+    _initialised(false),
+    _inv_mpu_iio(0)
 {
 }
 

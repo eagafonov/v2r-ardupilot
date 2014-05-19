@@ -3,6 +3,7 @@
 #ifndef __AP_INERTIAL_SENSOR_INV_MPU_IIO_H__
 #define __AP_INERTIAL_SENSOR_INV_MPU_IIO_H__
 
+#include <inv_mpu_iio.h>
 #include <stdint.h>
 #include <AP_HAL.h>
 #include <AP_Math.h>
@@ -15,9 +16,6 @@
 // Define the hack 
 #define APM_ACCEL_X_Y_SWAP
 
-namespace iio {
-class inv_mpu;
-};
 
 class AP_InertialSensor_INV_MPU_IIO : public AP_InertialSensor
 {
