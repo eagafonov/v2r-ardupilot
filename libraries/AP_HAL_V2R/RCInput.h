@@ -16,6 +16,8 @@ public:
     bool set_override(uint8_t channel, int16_t override);
     void clear_overrides();
 
+    void process_input();
+
 private:
     static const int MAX_CHANNELS = 8;
     static const uint16_t MIN_CHANNEL_VALUE = 1000;
@@ -25,6 +27,8 @@ private:
     static const uint8_t CHANNEL_THR = 3; // channel #3 is throttle
 
     uint16_t _periods[MAX_CHANNELS];
+
+    int mavlink_fd;
 };
 
 #endif // __AP_HAL_V2R_RCINPUT_H__

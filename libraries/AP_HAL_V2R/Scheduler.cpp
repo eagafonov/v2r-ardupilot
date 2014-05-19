@@ -6,6 +6,7 @@
 #include "Scheduler.h"
 #include "Storage.h"
 #include "UARTDriver.h"
+#include "RCInput.h"
 #include <unistd.h>
 #include <sys/time.h>
 #include <poll.h>
@@ -20,11 +21,14 @@ using namespace V2R;
 
 extern const AP_HAL::HAL& hal;
 extern V2RUARTDriver uartConsole;
+extern V2RRCInput rcinDriver;
+
 
 #define APM_V2R_TIMER_PRIORITY    13
 #define APM_V2R_UART_PRIORITY     12
 #define APM_V2R_MAIN_PRIORITY     11
 #define APM_V2R_IO_PRIORITY       10
+#define APM_V2R_RC_PRIORITY       13
 
 V2RScheduler::V2RScheduler()
 {}
@@ -78,6 +82,14 @@ void V2RScheduler::init(void* machtnichts)
     pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);
     
     pthread_create(&_io_thread_ctx, &thread_attr, (pthread_startroutine_t)&V2R::V2RScheduler::_io_thread, this);
+    
+    // RC Input thread
+    pthread_attr_init(&thread_attr);
+    param.sched_priority = APM_V2R_RC_PRIORITY;
+    (void)pthread_attr_setschedparam(&thread_attr, &param);
+    pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);
+    
+    pthread_create(&_io_thread_ctx, &thread_attr, (pthread_startroutine_t)&V2R::V2RScheduler::_rc_thread, this);
 }
 
 void V2RScheduler::_microsleep(uint32_t usec)
@@ -288,6 +300,20 @@ void *V2RScheduler::_io_thread(void)
 
         // run registered IO processes
         _run_io();
+    }
+    return NULL;
+}
+
+void *V2RScheduler::_rc_thread(void)
+{
+    prctl(PR_SET_NAME,"ArduPilot RC",0,0,0);
+
+    _setup_realtime(32768);
+    while (system_initializing()) {
+        poll(NULL, 0, 101);
+    }
+    while (true) {
+        rcinDriver.process_input();
     }
     return NULL;
 }

@@ -71,6 +71,7 @@ private:
     void *_timer_thread(void);
     void *_io_thread(void);
     void *_uart_thread(void);
+    void *_rc_thread(void);
 
     void _run_timers(bool called_from_timer_thread);
     void _run_io(void);

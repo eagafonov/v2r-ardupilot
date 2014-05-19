@@ -24,7 +24,7 @@ static V2RSPIDeviceManager spiDeviceManager;
 static V2RAnalogIn analogIn;
 static V2RStorage storageDriver;
 static V2RGPIO gpioDriver;
-static V2RRCInput rcinDriver;
+/*static*/ V2RRCInput rcinDriver; // Non-static to be called by Scheduler in rc_thread
 static V2RRCOutput rcoutDriver;
 static V2RScheduler schedulerInstance;
 static V2RUtil utilInstance;
@@ -86,6 +86,7 @@ void HAL_V2R::init(int argc,char* const argv[]) const
     uartConsole.set_blocking_writes(false); // non-blocking for console
     i2c->begin();
     spi->init(NULL);
+    rcin->init(NULL);
     rcout->init(NULL);
 }
 

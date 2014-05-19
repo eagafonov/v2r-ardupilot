@@ -33,3 +33,7 @@ gps_nmea:
 
 v2r_uart_console:
 	make -C libraries/AP_HAL_V2R/examples/uart_console TMPDIR=$(TMPDIR) upload
+
+v2r_rc_input:
+	make -C libraries/AP_HAL_V2R/examples/rc_input  TMPDIR=$(TMPDIR) upload
+
