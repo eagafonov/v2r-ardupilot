@@ -2,6 +2,7 @@
 
 // default sensors are present and healthy: gyro, accelerometer, barometer, rate_control, attitude_stabilization, yaw_position, altitude control, x/y position control, motor_control
 #define MAVLINK_SENSOR_PRESENT_DEFAULT (MAV_SYS_STATUS_SENSOR_3D_GYRO | MAV_SYS_STATUS_SENSOR_3D_ACCEL | MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE | MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL | MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION | MAV_SYS_STATUS_SENSOR_YAW_POSITION | MAV_SYS_STATUS_SENSOR_Z_ALTITUDE_CONTROL | MAV_SYS_STATUS_SENSOR_XY_POSITION_CONTROL | MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS)
+#include <logger.h>
 
 // use this to prevent recursion during sensor init
 static bool in_mavlink_delay;
@@ -1233,6 +1234,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
 
         default:
+            log_inf() << "[MAVLINK] Unsupported long command #" << (int)packet.command;
             result = MAV_RESULT_UNSUPPORTED;
             break;
         }
@@ -1835,7 +1837,10 @@ mission_failed:
         // allow override of RC channel values for HIL
         // or for complete GCS control of switch position
         // and RC PWM values.
-        if(msg->sysid != g.sysid_my_gcs) break;                         // Only accept control from our gcs
+        if(msg->sysid != g.sysid_my_gcs) {
+            log_inf() << "[GCS] Alien RC Channel override from sysid:" <<  (int)msg->sysid  << " while my GCS is #" << (int)g.sysid_my_gcs;
+            break;                         // Only accept control from our gcs
+        }
         mavlink_rc_channels_override_t packet;
         int16_t v[8];
         mavlink_msg_rc_channels_override_decode(msg, &packet);
