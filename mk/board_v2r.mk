@@ -59,6 +59,8 @@ endif
 # Library object files
 LIBOBJS			:=	$(SKETCHLIBOBJS)
 
+V2R_HOST?=v2r
+
 
 ################################################################################
 # Built products
@@ -90,7 +92,7 @@ all: $(SKETCHELF)
 
 
 $(SKETCHELF).timestamp-upload: $(SKETCHELF)
-	scp $(SKETCHELF) v2r:
+	scp $(SKETCHELF) $(V2R_HOST):
 	touch $@
 
 upload: $(SKETCHELF).timestamp-upload
