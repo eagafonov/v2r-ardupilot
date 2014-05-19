@@ -484,17 +484,7 @@ setup_radio(uint8_t argc, const Menu::arg *argv)
     g.rc_7.radio_max = g.rc_7.radio_in;
     g.rc_8.radio_max = g.rc_8.radio_in;
 
-    g.rc_1.radio_trim = g.rc_1.radio_in;
-    g.rc_2.radio_trim = g.rc_2.radio_in;
-    g.rc_4.radio_trim = g.rc_4.radio_in;
-    // 3 is not trimed
-    g.rc_5.radio_trim = 1500;
-    g.rc_6.radio_trim = 1500;
-    g.rc_7.radio_trim = 1500;
-    g.rc_8.radio_trim = 1500;
-
-
-    cliSerial->printf_P(PSTR("\nMove all controls to extremes. Enter to save: "));
+    cliSerial->printf_P(PSTR("\nMove all controls to extremes, then to trim position and hit enter to save: "));
     while(1) {
 
         delay(20);
@@ -515,6 +505,17 @@ setup_radio(uint8_t argc, const Menu::arg *argv)
             delay(20);
             while (cliSerial->read() != -1); /* flush */
 
+            // Get current position as trim
+            g.rc_1.radio_trim = g.rc_1.radio_in;
+            g.rc_2.radio_trim = g.rc_2.radio_in;
+            g.rc_4.radio_trim = g.rc_4.radio_in;
+            // 3 is not trimed
+            g.rc_5.radio_trim = 1500;
+            g.rc_6.radio_trim = 1500;
+            g.rc_7.radio_trim = 1500;
+            g.rc_8.radio_trim = 1500;
+
+            // Save
             g.rc_1.save_eeprom();
             g.rc_2.save_eeprom();
             g.rc_3.save_eeprom();
@@ -835,14 +836,14 @@ void report_optflow()
 static void
 print_radio_values()
 {
-    cliSerial->printf_P(PSTR("CH1: %d | %d\n"), (int)g.rc_1.radio_min, (int)g.rc_1.radio_max);
-    cliSerial->printf_P(PSTR("CH2: %d | %d\n"), (int)g.rc_2.radio_min, (int)g.rc_2.radio_max);
-    cliSerial->printf_P(PSTR("CH3: %d | %d\n"), (int)g.rc_3.radio_min, (int)g.rc_3.radio_max);
-    cliSerial->printf_P(PSTR("CH4: %d | %d\n"), (int)g.rc_4.radio_min, (int)g.rc_4.radio_max);
-    cliSerial->printf_P(PSTR("CH5: %d | %d\n"), (int)g.rc_5.radio_min, (int)g.rc_5.radio_max);
-    cliSerial->printf_P(PSTR("CH6: %d | %d\n"), (int)g.rc_6.radio_min, (int)g.rc_6.radio_max);
-    cliSerial->printf_P(PSTR("CH7: %d | %d\n"), (int)g.rc_7.radio_min, (int)g.rc_7.radio_max);
-    cliSerial->printf_P(PSTR("CH8: %d | %d\n"), (int)g.rc_8.radio_min, (int)g.rc_8.radio_max);
+    cliSerial->printf_P(PSTR("CH1: %d | %d | %d\n"), (int)g.rc_1.radio_min, (int)g.rc_1.radio_trim, (int)g.rc_1.radio_max);
+    cliSerial->printf_P(PSTR("CH2: %d | %d | %d\n"), (int)g.rc_2.radio_min, (int)g.rc_2.radio_trim, (int)g.rc_2.radio_max);
+    cliSerial->printf_P(PSTR("CH3: %d | %d | %d\n"), (int)g.rc_3.radio_min, (int)g.rc_3.radio_trim, (int)g.rc_3.radio_max);
+    cliSerial->printf_P(PSTR("CH4: %d | %d | %d\n"), (int)g.rc_4.radio_min, (int)g.rc_4.radio_trim, (int)g.rc_4.radio_max);
+    cliSerial->printf_P(PSTR("CH5: %d | %d | %d\n"), (int)g.rc_5.radio_min, (int)g.rc_5.radio_trim, (int)g.rc_5.radio_max);
+    cliSerial->printf_P(PSTR("CH6: %d | %d | %d\n"), (int)g.rc_6.radio_min, (int)g.rc_6.radio_trim, (int)g.rc_6.radio_max);
+    cliSerial->printf_P(PSTR("CH7: %d | %d | %d\n"), (int)g.rc_7.radio_min, (int)g.rc_7.radio_trim, (int)g.rc_7.radio_max);
+    cliSerial->printf_P(PSTR("CH8: %d | %d | %d\n"), (int)g.rc_8.radio_min, (int)g.rc_8.radio_trim, (int)g.rc_8.radio_max);
 }
 
 static void
