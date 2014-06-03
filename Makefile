@@ -1,4 +1,4 @@
-all: v2r_uart_console gps_nmea
+all: gpsd_client_test
 
 TMPDIR:=$(shell pwd)/build
 
@@ -30,6 +30,10 @@ gps_ublox:
 
 gps_nmea:
 	make -C libraries/AP_GPS/examples/GPS_NMEA_test TMPDIR=$(TMPDIR) upload
+
+gpsd_client_test:
+	make -C libraries/GPSDClient/examples/gpsd_client_test TMPDIR=$(TMPDIR) upload
+
 
 v2r_uart_console:
 	make -C libraries/AP_HAL_V2R/examples/uart_console TMPDIR=$(TMPDIR) upload

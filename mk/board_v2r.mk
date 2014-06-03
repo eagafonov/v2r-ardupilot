@@ -61,6 +61,10 @@ LIBOBJS			:=	$(SKETCHLIBOBJS)
 
 V2R_HOST?=v2r
 
+# HACK Dirty hack to compile gpsd client
+CXXFLAGS += -I$(V2R_SDK_ROOT)/fs/output/xpackage/gpsd-3.9/usr/include
+LIBS += -L$(V2R_SDK_ROOT)/fs/output/xpackage/gpsd-3.9/usr/lib -lgps
+
 
 ################################################################################
 # Built products
