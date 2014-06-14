@@ -66,7 +66,9 @@ static void arm_motors_check()
             pre_arm_checks(true);
             if(ap.pre_arm_check) {
                 if (arm_checks(true)) {
+                    log_dbg() << "arm motors";
                     init_arm_motors();
+                    arming_counter = 0;
                 } else {
                     log_inf() << "arm checks fail";
                     arming_counter = 0;
@@ -94,7 +96,9 @@ static void arm_motors_check()
 
         // disarm the motors
         if (arming_counter == DISARM_DELAY && motors.armed()) {
+            log_dbg() << "disarm motors";
             init_disarm_motors();
+            arming_counter = 0;
         }
 
         // Yaw is centered so reset arming counter
