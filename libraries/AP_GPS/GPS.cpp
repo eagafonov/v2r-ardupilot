@@ -52,7 +52,7 @@ GPS::update(void)
     bool result;
     uint32_t tnow;
 
-    if (!_port->is_initialized()) {
+    if (_port && !(_port->is_initialized())) {
         log_wrn() << "[GPS] UART is not initialized";
         hal.scheduler->delay(10);
         result = false;

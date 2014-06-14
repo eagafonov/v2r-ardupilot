@@ -12,5 +12,5 @@
 #include "AP_GPS_None.h"
 #include "AP_GPS_Auto.h"
 #include "AP_GPS_HIL.h"
-
+#include "AP_GPS_GPSD.h"
 

@@ -1,4 +1,4 @@
-all: gpsd_client_test
+all: gps_gpsd
 
 TMPDIR:=$(shell pwd)/build
 
@@ -30,6 +30,9 @@ gps_ublox:
 
 gps_nmea:
 	make -C libraries/AP_GPS/examples/GPS_NMEA_test TMPDIR=$(TMPDIR) upload
+
+gps_gpsd:
+	make -C libraries/AP_GPS/examples/GPS_GPSD_test TMPDIR=$(TMPDIR) upload
 
 gpsd_client_test:
 	make -C libraries/GPSDClient/examples/gpsd_client_test TMPDIR=$(TMPDIR) upload

@@ -76,7 +76,6 @@ void HAL_V2R::init(int argc,char* const argv[]) const
         }
     }
 
-    uartBDriver.set_device_path("/dev/ttyS1"); // Port B is always UART1
 
     scheduler->init(NULL);
     uartA->begin(115200);

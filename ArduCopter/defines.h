@@ -122,7 +122,8 @@
 #define GPS_PROTOCOL_MTK        4
 #define GPS_PROTOCOL_HIL        5
 #define GPS_PROTOCOL_MTK19      6
-#define GPS_PROTOCOL_AUTO       7
+#define GPS_PROTOCOL_GPSD       7
+#define GPS_PROTOCOL_AUTO       8
 
 // HIL enumerations
 #define HIL_MODE_DISABLED               0

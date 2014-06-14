@@ -95,7 +95,7 @@
  # define CONFIG_ADC        DISABLED
  # define MAGNETOMETER ENABLED
  # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
- # define GPS_PROTOCOL  GPS_PROTOCOL_NONE
+ # define GPS_PROTOCOL  GPS_PROTOCOL_GPSD
 #else
 #error "Can't setup APM hardware defaults"
 #endif
