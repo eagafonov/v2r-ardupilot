@@ -40,7 +40,7 @@ public:
     void     reboot(bool hold_in_bootloader);
 
 private:
-    struct timespec _sketch_start_time;    
+    struct timespec _sketch_start_time;
     void _timer_handler(int signum);
     void _microsleep(uint32_t usec);
 
@@ -67,6 +67,7 @@ private:
     pthread_t _timer_thread_ctx;
     pthread_t _io_thread_ctx;
     pthread_t _uart_thread_ctx;
+    pthread_t _rc_thread_ctx;
 
     void *_timer_thread(void);
     void *_io_thread(void);

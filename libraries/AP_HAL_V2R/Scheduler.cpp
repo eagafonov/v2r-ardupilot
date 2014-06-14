@@ -89,7 +89,7 @@ void V2RScheduler::init(void* machtnichts)
     (void)pthread_attr_setschedparam(&thread_attr, &param);
     pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);
     
-    pthread_create(&_io_thread_ctx, &thread_attr, (pthread_startroutine_t)&V2R::V2RScheduler::_rc_thread, this);
+    pthread_create(&_rc_thread_ctx, &thread_attr, (pthread_startroutine_t)&V2R::V2RScheduler::_rc_thread, this);
 }
 
 void V2RScheduler::_microsleep(uint32_t usec)
@@ -230,7 +230,7 @@ void *V2RScheduler::_timer_thread(void)
 
     _setup_realtime(32768);
     while (system_initializing()) {
-        poll(NULL, 0, 1);        
+        poll(NULL, 0, 1001);
     }
     while (true) {
         _microsleep(5000);
@@ -267,7 +267,7 @@ void *V2RScheduler::_uart_thread(void)
     
     _setup_realtime(32768);
     while (system_initializing()) {
-        poll(NULL, 0, 1);
+        poll(NULL, 0, 1002);
         // we still need to pump console messages
         uartConsole._timer_tick();
     }
@@ -290,7 +290,7 @@ void *V2RScheduler::_io_thread(void)
 
     _setup_realtime(32768);
     while (system_initializing()) {
-        poll(NULL, 0, 1);        
+        poll(NULL, 0, 1003);        
     }
     while (true) {
         _microsleep(20000);
@@ -310,7 +310,7 @@ void *V2RScheduler::_rc_thread(void)
 
     _setup_realtime(32768);
     while (system_initializing()) {
-        poll(NULL, 0, 101);
+        poll(NULL, 0, 1004);
     }
     while (true) {
         rcinDriver.process_input();
