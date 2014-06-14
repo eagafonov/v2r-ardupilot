@@ -994,7 +994,7 @@ void loop()
                 log_dbg() << "[CLI] Hit count " << (int)crlf_count;
             }
 
-            if (crlf_count == 3) {
+            if (crlf_count >= 3) {
                 log_inf() << "[CLI] Launch menu";
                 run_cli(hal.console);
             }
