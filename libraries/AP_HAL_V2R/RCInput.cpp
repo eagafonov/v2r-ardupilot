@@ -12,7 +12,8 @@ using namespace V2R;
 extern const AP_HAL::HAL& hal;
 
 V2RRCInput::V2RRCInput():
-mavlink_fd(-1)
+mavlink_fd(-1),
+_valid_channels(0)
 {
     for(int i = 0; i < sizeof(_periods) / sizeof(_periods[0]); i++) {
         _periods[i] = MID_CHANNEL_VALUE;
@@ -56,7 +57,7 @@ void V2RRCInput::init(void* machtnichts)
 }
 
 uint8_t V2RRCInput::valid_channels() {
-    return 0xFF; // All 8 channels are supported
+    return _valid_channels;
 }
 
 uint16_t V2RRCInput::read(uint8_t ch) {
@@ -74,6 +75,9 @@ uint8_t V2RRCInput::read(uint16_t* periods, uint8_t len) {
     for (uint8_t i = 0; i < len; i++){
         periods[i] = _periods[i];
     }
+
+    _valid_channels = 0;
+
     return len;
 }
 
@@ -92,6 +96,7 @@ bool V2RRCInput::set_overrides(int16_t *overrides, uint8_t len) {
 bool V2RRCInput::set_override(uint8_t channel, int16_t override) {
     if (channel < MAX_CHANNELS) {
         if ((override >= MIN_CHANNEL_VALUE) && (override <= MAX_CHANNEL_VALUE)) {
+            _valid_channels++;
             _periods[channel] = override;
         }
         return true;

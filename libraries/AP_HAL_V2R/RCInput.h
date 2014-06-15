@@ -29,6 +29,8 @@ private:
     uint16_t _periods[MAX_CHANNELS];
 
     int mavlink_fd;
+
+    uint8_t _valid_channels;
 };
 
 #endif // __AP_HAL_V2R_RCINPUT_H__
