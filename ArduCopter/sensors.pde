@@ -1,6 +1,10 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 // Sensors are not available in HIL_MODE_ATTITUDE
+#if CONFIG_HAL_BOARD == HAL_BOARD_V2R
+#include <RSSI_V2R.h>
+#endif
+
 #if HIL_MODE != HIL_MODE_ATTITUDE
 
  #if CONFIG_SONAR == ENABLED
@@ -123,8 +127,12 @@ void read_receiver_rssi(void)
     if (g.rssi_range <= 0) {
         receiver_rssi = 0;
     }else{
+#if CONFIG_HAL_BOARD == HAL_BOARD_V2R
+        receiver_rssi = read_rssi_v2r();
+#else
         rssi_analog_source->set_pin(g.rssi_pin);
         float ret = rssi_analog_source->voltage_average() * 255 / g.rssi_range;
         receiver_rssi = constrain_int16(ret, 0, 255);
+#endif
     }
 }

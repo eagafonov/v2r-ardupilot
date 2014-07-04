@@ -19,6 +19,7 @@
 #include <AP_Param.h>
 #include <DataFlash.h>
 #include <AP_GPS.h>
+#include <RSSI_V2R.h>
 // #include <AP_Baro.h>
 // #include <AP_Compass.h>
 // #include <AP_Declination.h>
@@ -38,10 +39,14 @@ void loop()
 
     int channels = hal.rcin->read(rc, 8);
 
+    uint8_t rssi = read_rssi_v2r();
+
 #if 1
     for (int i = 0; i < channels; i++) {
         hal.console->printf("%5u", (rc[i]));
     }
+
+    hal.console->printf("%5u", (int)rssi);
 
     hal.console->println();
 #endif
