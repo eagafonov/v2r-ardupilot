@@ -1,6 +1,9 @@
 
 #include "GPIO.h"
 
+#include <fstream>
+#include <logger.h>
+
 using namespace V2R;
 
 V2RGPIO::V2RGPIO()
@@ -23,10 +26,36 @@ uint8_t V2RGPIO::read(uint8_t pin) {
 }
 
 void V2RGPIO::write(uint8_t pin, uint8_t value)
-{}
+{
+    // pin is threated as CON number
+    // echo "set con 44 output 1" > /dev/v2r_pins
+
+//     log_dbg() << "[GPIO] w " << (int) pin << " " << (int)value;
+
+    value = value ? 1 : 0;
+
+    _outputValues[pin] = value ;
+
+    std::ofstream f("/dev/v2r_pins", std::ofstream::out);
+
+    if (f.is_open()) {
+        f << "set con " << (int)pin << " output " << (int)value << std::endl;
+        f.close();
+    } else {
+        log_err() << "Failed to open /dev/v2r_pins to write";
+    }
+}
 
 void V2RGPIO::toggle(uint8_t pin)
-{}
+{
+    OutputValues::iterator it = _outputValues.find(pin);
+
+    if (it != _outputValues.end()) {
+        write(pin, !it->second);
+    } else {
+        log_wrn() << "[GPIO] Failed to togle pin #" << (int)pin;
+    }
+}
 
 /* Alternative interface: */
 AP_HAL::DigitalSource* V2RGPIO::channel(uint16_t n) {

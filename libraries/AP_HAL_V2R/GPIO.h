@@ -4,6 +4,8 @@
 
 #include <AP_HAL_V2R.h>
 
+#include <map>
+
 class V2R::V2RGPIO : public AP_HAL::GPIO {
 public:
     V2RGPIO();
@@ -23,6 +25,10 @@ public:
 
     /* return true if USB cable is connected */
     bool    usb_connected(void);
+
+private:
+    typedef std::map<uint8_t, uint8_t> OutputValues;
+    OutputValues _outputValues;
 };
 
 class V2R::V2RDigitalSource : public AP_HAL::DigitalSource {
