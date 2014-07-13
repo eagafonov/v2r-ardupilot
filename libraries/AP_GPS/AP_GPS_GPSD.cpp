@@ -86,6 +86,10 @@ bool AP_GPS_GPSD::read(void)
             /* Display data from the GPS receiver. */
             // if (gps_data.set & ..
 
+            if (gps_data.set & SATELLITE_SET) {
+                num_sats = gps_data.satellites_visible;
+            }
+
             if (gps_data.status == STATUS_NO_FIX) {
                 fix = FIX_NONE;
                 return true; // Nothing to do anymore
@@ -126,10 +130,6 @@ bool AP_GPS_GPSD::read(void)
             time_week = intfixtime / (7 * 86400); // Weeks
 
             time_week_ms = (uint32_t)(intfixtime % (7 * 86400)) * 1000 + intfixtime_ms;
-
-            if (gps_data.set & SATELLITE_SET) {
-                num_sats = gps_data.satellites_visible;
-            }
 
 //             printf("status: %d satelites:%d/%d fix_mode:%d long:%lf(+-%lf) lat:%lf(+-%lf) alt:%lf(+-%lf) time:%lf\n",
 //                     gps_data.status,
