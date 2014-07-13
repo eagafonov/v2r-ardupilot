@@ -44,23 +44,33 @@
 
 extern const AP_HAL::HAL& hal;
 
-// Convenience macros //////////////////////////////////////////////////////////
-//
-#define DIGIT_TO_VAL(_x)        (_x - '0')
+AP_GPS_GPSD::AP_GPS_GPSD(void):
+    GPS(),
+    _gps_data_init(false)
+{
+}
 
 // Public Methods //////////////////////////////////////////////////////////////
 void AP_GPS_GPSD::init(AP_HAL::UARTDriver *s, enum GPS_Engine_Setting nav_setting)
 {
 // 	_port = s;
-    
+    _port = 0; // we do not use UART so make sure the driver does  not check it as well
+
+    if (_gps_data_init) {
+        log_wrn() << "[GPSD] Already initialized!";
+        return;
+    };
+
     int ret;
-    
+
     ret = gps_open("127.0.0.1", "2947", &gps_data);
-    
+
     log_dbg() << "[GPSD] open result " << ret;
 
     ret = gps_stream(&gps_data, WATCH_ENABLE | WATCH_JSON, NULL);
     log_dbg() << "[GPSD] stream result " << ret;
+
+    _gps_data_init = true;
 }
 
 bool AP_GPS_GPSD::read(void)

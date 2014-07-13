@@ -57,9 +57,7 @@
 class AP_GPS_GPSD : public GPS
 {
 public:
-	AP_GPS_GPSD(void) : 
-	GPS()
-		{}
+	AP_GPS_GPSD(void);
 
     /// Perform a (re)initialisation of the GPS; sends the
     /// protocol configuration messages.
@@ -72,6 +70,7 @@ public:
     virtual bool        read();
 
 private:
+    bool _gps_data_init;
     struct gps_data_t gps_data;
 };
 
