@@ -1,4 +1,4 @@
-all: gps_gpsd
+all: notify
 
 TMPDIR:=$(shell pwd)/build
 
@@ -47,3 +47,5 @@ v2r_rc_input:
 inertial_nav_test:
 	make -C libraries/AP_InertialNav/examples/AP_InertialNav_test  TMPDIR=$(TMPDIR) upload
 
+notify:
+	make -C libraries/AP_Notify/examples/AP_Notify_test  TMPDIR=$(TMPDIR) upload
