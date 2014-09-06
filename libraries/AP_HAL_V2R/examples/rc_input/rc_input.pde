@@ -28,7 +28,24 @@
 
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 
+void check_mavlink_endianess() {
+    union {
+        uint16_t two_bytes;
+        uint8_t bytes[2];
+    };
+
+    bytes[0] = 0;
+    bytes[1] = 1;
+
+    bool is_big_endian_platform = (two_bytes == 0x0001);
+    bool is_big_endian_mavlink = (MAVLINK_ENDIAN != MAVLINK_LITTLE_ENDIAN);
+
+    printf("Endianess check: 0x%04X -> platform:%d mavlink:%d mavlink_swap_bytes:%d\n", two_bytes, is_big_endian_platform, is_big_endian_mavlink, MAVLINK_NEED_BYTE_SWAP);
+};
+
 void setup() {
+    check_mavlink_endianess();
+    
     hal.console->printf("Process RC Input\n");
 }
 
@@ -46,9 +63,9 @@ void loop()
         hal.console->printf("%5u", (rc[i]));
     }
 
-    hal.console->printf("%5u", (int)rssi);
+    hal.console->printf("%5u\r", (int)rssi);
 
-    hal.console->println();
+//     hal.console->println();
 #endif
 }
 
