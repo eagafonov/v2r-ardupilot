@@ -20,6 +20,11 @@ _valid_channels(0)
     }
 
     _periods[CHANNEL_THR] = MIN_CHANNEL_VALUE;
+
+    // channels 5-8
+    for(int i = 4; i < sizeof(_periods) / sizeof(_periods[0]); i++) {
+        _periods[i] = MIN_CHANNEL_VALUE;
+    }
 }
 
 void V2RRCInput::init(void* machtnichts)
