@@ -67,10 +67,15 @@ void AP_GPS_GPSD::init(AP_HAL::UARTDriver *s, enum GPS_Engine_Setting nav_settin
 
     log_dbg() << "[GPSD] open result " << ret;
 
-    ret = gps_stream(&gps_data, WATCH_ENABLE | WATCH_JSON, NULL);
-    log_dbg() << "[GPSD] stream result " << ret;
+    if (ret == 0) {
 
-    _gps_data_init = true;
+        ret = gps_stream(&gps_data, WATCH_ENABLE | WATCH_JSON, NULL);
+        log_dbg() << "[GPSD] stream result " << ret;
+
+        if (ret == 0) {
+            _gps_data_init = true;
+        }
+    }
 }
 
 bool AP_GPS_GPSD::read(void)
@@ -78,10 +83,16 @@ bool AP_GPS_GPSD::read(void)
     int16_t numc;
     bool parsed = false;
 
+    if (!_gps_data_init) {
+        log_err() << "[GPSD] Not initialized";
+        return false;
+    }
+
     if (gps_waiting (&gps_data, 0)) {
         errno = 0;
         if (gps_read (&gps_data) == -1) {
             log_err() << "[GPSD] read error";
+            _gps_data_init = false;
         } else {
             /* Display data from the GPS receiver. */
             // if (gps_data.set & ..
