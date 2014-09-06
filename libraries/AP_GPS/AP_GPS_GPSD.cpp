@@ -82,11 +82,19 @@ bool AP_GPS_GPSD::read(void)
 {
     int16_t numc;
     bool parsed = false;
+    
+    static bool notified = false;
 
     if (!_gps_data_init) {
-        log_err() << "[GPSD] Not initialized";
+        
+        if (!notified) {
+            notified = true;
+            log_err() << "[GPSD] Not initialized";
+        }
         return false;
     }
+    
+    notified = false;
 
     if (gps_waiting (&gps_data, 0)) {
         errno = 0;
