@@ -45,6 +45,7 @@ public:
 
         // additional flags
         uint16_t external_leds      : 1;    // 1 if external LEDs are enabled (normally only used for copter)
+        uint16_t rc_input           : 1;    // 1 if RC	Input gots PPM frame. Need to be set each time frame is recvd
     };
 
     // the notify flags are static to allow direct class access

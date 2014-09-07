@@ -183,6 +183,7 @@ static void v2r_rc_input_comm_send_buffer(mavlink_channel_t chan, const uint8_t 
 
 #define MAVLINK_USE_CONVENIENCE_FUNCTIONS
 #include <include/mavlink/v1.0/common/mavlink.h>
+#include <AP_Notify.h>
 
 void V2RRCInput::process_input()
 {
@@ -243,6 +244,7 @@ void V2RRCInput::process_input()
 
                         // TODO protect with semaphore ?
                         set_overrides((int16_t*)&rc_channels_override.chan1_raw, 8);
+                        AP_Notify::flags.rc_input = 1;
 
                     break;
                 }

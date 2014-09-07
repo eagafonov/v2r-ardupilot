@@ -45,6 +45,8 @@ void loop()
 {
     hal.scheduler->delay(20);
 
+    AP_Notify::flags.rc_input = 1;
+
     while (hal.console->available()) {
         char c;
 

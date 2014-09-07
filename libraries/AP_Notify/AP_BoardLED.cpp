@@ -171,4 +171,19 @@ void AP_BoardLED::update(void)
             hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
             break;        
     }
+
+    // RC Input
+    static uint8_t rc_input_counter = 0;
+	
+    if (AP_Notify::flags.rc_input) {
+        if (rc_input_counter == 0) {
+            hal.gpio->write(HAL_GPIO_B_LED_PIN, HAL_GPIO_LED_ON);
+            rc_input_counter++;
+        } else {
+            hal.gpio->write(HAL_GPIO_B_LED_PIN, HAL_GPIO_LED_OFF);
+            rc_input_counter = 0;
+            // Reset the flag to blink each time when RC Input frame is processed
+            AP_Notify::flags.rc_input = 0; 
+        }
+    }
 }
