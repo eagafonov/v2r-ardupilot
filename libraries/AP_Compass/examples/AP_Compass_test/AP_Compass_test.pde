@@ -16,6 +16,15 @@
 #include <AP_Math.h>    // ArduPilot Mega Vector/Matrix math Library
 #include <AP_Declination.h>
 #include <AP_Compass.h> // Compass Library
+#include <GCS_MAVLink.h>
+#include <logger.h>
+#include <AP_Notify.h>
+#include <DataFlash.h>
+#include <AP_GPS.h>
+#include <AP_InertialSensor.h>
+#include <AP_ADC.h>
+#include <AP_Baro.h>
+#include <Filter.h>
 
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 

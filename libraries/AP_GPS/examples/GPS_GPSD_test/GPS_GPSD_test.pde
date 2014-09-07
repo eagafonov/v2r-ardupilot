@@ -20,6 +20,8 @@
 #include <AP_InertialSensor.h>
 #include <AP_ADC.h>
 #include <logger.h>
+#include <AP_Baro.h>
+#include <Filter.h>
 
 #include <GPSDClient.h>
 

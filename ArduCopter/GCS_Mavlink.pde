@@ -186,7 +186,7 @@ static NOINLINE void send_extended_status1(mavlink_channel_t chan, uint16_t pack
     if (g.compass_enabled && compass.healthy() && ahrs.use_compass()) {
         control_sensors_health |= MAV_SYS_STATUS_SENSOR_3D_MAG;
     }
-    if (g_gps != NULL && g_gps->status() > GPS::NO_GPS && !gps_glitch.glitching()) {
+    if (g_gps != NULL && g_gps->status() > GPS::NO_GPS && (!gps_glitch.glitching()||ap.usb_connected)) {
         control_sensors_health |= MAV_SYS_STATUS_SENSOR_GPS;
     }
     if (ap.rc_receiver_present && !failsafe.radio) {
@@ -217,14 +217,6 @@ static NOINLINE void send_extended_status1(mavlink_channel_t chan, uint16_t pack
         0, // comm drops in pkts,
         0, 0, 0, 0);
 
-}
-
-static void NOINLINE send_meminfo(mavlink_channel_t chan)
-{
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM1 || CONFIG_HAL_BOARD == HAL_BOARD_APM2
-    extern unsigned __brkval;
-    mavlink_msg_meminfo_send(chan, __brkval, memcheck_available_memory());
-#endif
 }
 
 static void NOINLINE send_location(mavlink_channel_t chan)
@@ -585,7 +577,7 @@ static bool mavlink_try_send_message(mavlink_channel_t chan, enum ap_message id,
 
     case MSG_EXTENDED_STATUS2:
         CHECK_PAYLOAD_SIZE(MEMINFO);
-        send_meminfo(chan);
+        gcs[chan-MAVLINK_COMM_0].send_meminfo();
         break;
 
     case MSG_ATTITUDE:
@@ -1186,7 +1178,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             } 
             if (packet.param3 == 1) {
 #if HIL_MODE != HIL_MODE_ATTITUDE
-                init_barometer();
+                init_barometer(false);                      // fast barometer calibratoin
 #endif
             }
             if (packet.param4 == 1) {
@@ -1221,6 +1213,30 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                 }
             } else {
                 result = MAV_RESULT_UNSUPPORTED;
+            }
+            break;
+
+        case MAV_CMD_DO_SET_SERVO:
+            if (ServoRelayEvents.do_set_servo(packet.param1, packet.param2)) {
+                result = MAV_RESULT_ACCEPTED;
+            }
+            break;
+
+        case MAV_CMD_DO_REPEAT_SERVO:
+            if (ServoRelayEvents.do_repeat_servo(packet.param1, packet.param2, packet.param3, packet.param4*1000)) {
+                result = MAV_RESULT_ACCEPTED;
+            }
+            break;
+
+        case MAV_CMD_DO_SET_RELAY:
+            if (ServoRelayEvents.do_set_relay(packet.param1, packet.param2)) {
+                result = MAV_RESULT_ACCEPTED;
+            }
+            break;
+
+        case MAV_CMD_DO_REPEAT_RELAY:
+            if (ServoRelayEvents.do_repeat_relay(packet.param1, packet.param2, packet.param3*1000)) {
+                result = MAV_RESULT_ACCEPTED;
             }
             break;
 
@@ -1347,7 +1363,10 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
         case MAV_CMD_NAV_ROI:
         case MAV_CMD_DO_SET_ROI:
-            param1 = tell_command.p1;                                   // MAV_ROI (aka roi mode) is held in wp's parameter but we actually do nothing with it because we only support pointing at a specific location provided by x,y and z parameters
+            param1 = tell_command.p1;                        // MAV_ROI (aka roi mode) is held in wp's parameter but we actually do nothing with it because we only support pointing at a specific location provided by x,y and z parameters
+            x = tell_command.lat/1.0e7f;                     // local (x), global (latitude)
+            y = tell_command.lng/1.0e7f;                     // local (y), global (longitude)
+            z = tell_command.alt/1.0e2f;                     // local (z), global/relative (altitude)
             break;
 
         case MAV_CMD_CONDITION_YAW:
@@ -1376,8 +1395,18 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             break;
 
         case MAV_CMD_DO_REPEAT_SERVO:
-            param4 = tell_command.lng;
+            param4 = tell_command.lng*0.001f; // time
+            param3 = tell_command.lat;        // repeat
+            param2 = tell_command.alt;        // pwm
+            param1 = tell_command.p1;         // channel
+            break;
+            
         case MAV_CMD_DO_REPEAT_RELAY:
+            param3 = tell_command.lat*0.001f; // time
+            param2 = tell_command.alt;        // count
+            param1 = tell_command.p1;         // relay number
+            break;
+            
         case MAV_CMD_DO_CHANGE_SPEED:
             param3 = tell_command.lat;
             param2 = tell_command.alt;
@@ -1427,6 +1456,10 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
         // mark the firmware version in the tlog
         send_text_P(SEVERITY_LOW, PSTR(FIRMWARE_STRING));
+
+#if defined(PX4_GIT_VERSION) && defined(NUTTX_GIT_VERSION)
+        send_text_P(SEVERITY_LOW, PSTR("PX4: " PX4_GIT_VERSION " NuttX: " NUTTX_GIT_VERSION));
+#endif
 
         // send system ID if we can
         char sysid[40];
@@ -1664,8 +1697,18 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             break;
 
         case MAV_CMD_DO_REPEAT_SERVO:
-            tell_command.lng = packet.param4;
+            tell_command.lng = packet.param4*1000; // time
+            tell_command.lat = packet.param3;      // count
+            tell_command.alt = packet.param2;      // PWM
+            tell_command.p1  = packet.param1;      // channel
+            break;
+            
         case MAV_CMD_DO_REPEAT_RELAY:
+            tell_command.lat = packet.param3*1000; // time
+            tell_command.alt = packet.param2;      // count
+            tell_command.p1  = packet.param1;      // relay number
+            break;
+            
         case MAV_CMD_DO_CHANGE_SPEED:
             tell_command.lat = packet.param3;
             tell_command.alt = packet.param2;
@@ -2042,7 +2085,7 @@ mission_failed:
 static void mavlink_delay_cb()
 {
     static uint32_t last_1hz, last_50hz, last_5s;
-    if (!gcs[0].initialised) return;
+    if (!gcs[0].initialised || in_mavlink_delay) return;
 
     in_mavlink_delay = true;
 

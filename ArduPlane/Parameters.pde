@@ -12,7 +12,16 @@
 #define GOBJECTN(v, pname, name, class) { AP_PARAM_GROUP, name, Parameters::k_param_ ## pname, &v, {group_info : class::var_info} }
 
 const AP_Param::Info var_info[] PROGMEM = {
+    // @Param: FORMAT_VERSION
+    // @DisplayName: Eeprom format version number
+    // @Description: This value is incremented when changes are made to the eeprom format
+    // @User: Advanced
     GSCALAR(format_version,         "FORMAT_VERSION", 0),
+
+    // @Param: SYSID_SW_TYPE
+    // @DisplayName: Software Type
+    // @Description: This is used by the ground station to recognise the software type (eg ArduPlane vs ArduCopter)
+    // @User: Advanced
     GSCALAR(software_type,          "SYSID_SW_TYPE",  Parameters::k_software_type),
 
     // @Param: SYSID_THISMAV
@@ -134,14 +143,14 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: User
     GSCALAR(level_roll_limit,              "LEVEL_ROLL_LIMIT",   5),
 
-    // @Param: land_pitch_cd
+    // @Param: LAND_PITCH_CD
     // @DisplayName: Landing Pitch
     // @Description: Used in autoland for planes without airspeed sensors in hundredths of a degree
     // @Units: centi-Degrees
     // @User: Advanced
     GSCALAR(land_pitch_cd,          "LAND_PITCH_CD",  0),
 
-    // @Param: land_flare_alt
+    // @Param: LAND_FLARE_ALT
     // @DisplayName: Landing flare altitude
     // @Description: Altitude in autoland at which to lock heading and flare to the LAND_PITCH_CD pitch
     // @Units: meters
@@ -149,7 +158,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Advanced
     GSCALAR(land_flare_alt,          "LAND_FLARE_ALT",  3.0),
 
-    // @Param: land_flare_sec
+    // @Param: LAND_FLARE_SEC
     // @DisplayName: Landing flare time
     // @Description: Time before landing point at which to lock heading and flare to the LAND_PITCH_CD pitch
     // @Units: seconds
@@ -267,6 +276,15 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Increment: 1
     // @User: Standard
     GSCALAR(fence_maxalt,           "FENCE_MAXALT",   0),
+
+    // @Param: FENCE_RETALT
+    // @DisplayName: Fence Return Altitude
+    // @Description: Altitude the aircraft will transit to when a fence breach occurs.  If FENCE_RETALT is <= 0 then the midpoint between FENCE_MAXALT and FENCE_MINALT is used, unless FENCE_MAXALT < FENCE_MINALT.  If FENCE_MAXALT < FENCE_MINALT AND FENCE_RETALT is <= 0 then ALT_HOLD_RTL is the altitude used on a fence breach.
+    // @Units: meters
+    // @Range: 0 32767
+    // @Increment: 1
+    // @User: Standard
+    GSCALAR(fence_retalt,           "FENCE_RETALT",   0),
 #endif
 
     // @Param: RALLY_TOTAL
@@ -628,8 +646,8 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: LOG_BITMASK
     // @DisplayName: Log bitmask
-    // @Description: Two byte bitmap of log types to enable in dataflash
-    // @Values: 0:Disabled,1902:Default,2030:Default+IMU
+    // @Description: Bitmap of what log types to enable in dataflash. This values is made up of the sum of each of the log types you want to be saved on dataflash. On a PX4 or Pixhawk the large storage size of a microSD card means it is usually best just to enable all log types by setting this to 65535. On APM2 the smaller 4 MByte dataflash means you need to be more selective in your logging or you may run out of log space while flying (in which case it will wrap and overwrite the start of the log). The individual bits are ATTITUDE_FAST=1, ATTITUDE_MEDIUM=2, GPS=4, PerformanceMonitoring=8, ControlTuning=16, NavigationTuning=32, Mode=64, IMU=128, Commands=256, Battery=512, Compass=1024, TECS=2048, Camera=4096, RCandServo=8192, Sonar=16384, Arming=32768, LogWhenDisarmed=1073741824
+    // @Values: 0:Disabled,5190:APM2-Default,65535:PX4/Pixhawk-Default
     // @User: Advanced
     GSCALAR(log_bitmask,            "LOG_BITMASK",    DEFAULT_LOG_BITMASK),
 
@@ -675,7 +693,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: ALT_HOLD_RTL
     // @DisplayName: RTL altitude
-    // @Description: Return to launch target altitude. This is the altitude the plane will aim for and loiter at when returning home. If this is negative (usually -1) then the plane will use the current altitude at the time of entering RTL.
+    // @Description: Return to launch target altitude. This is the altitude the plane will aim for and loiter at when returning home. If this is negative (usually -1) then the plane will use the current altitude at the time of entering RTL. Note that when transiting to a Rally Point the alitude of the Rally Point is used instead of ALT_HOLD_RTL.
     // @Units: centimeters
     // @User: User
     GSCALAR(RTL_altitude_cm,        "ALT_HOLD_RTL",   ALT_HOLD_HOME_CM),
@@ -731,9 +749,17 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Param: RSSI_PIN
     // @DisplayName: Receiver RSSI sensing pin
     // @Description: This selects an analog pin for the receiver RSSI voltage. It assumes the voltage is 5V for max rssi, 0V for minimum
-    // @Values: -1:Disabled, 0:A0, 1:A1, 13:A13
+    // @Values: -1:Disabled, 0:A0, 1:A1, 13:A13, 103:Pixhawk
     // @User: Standard
     GSCALAR(rssi_pin,            "RSSI_PIN",         -1),
+
+    // @Param: RSSI_RANGE
+    // @DisplayName: Receiver RSSI voltage range
+    // @Description: Receiver RSSI voltage range
+    // @Units: Volt
+    // @Values: 3.3:3.3V, 5.0:5V
+    // @User: Standard
+    GSCALAR(rssi_range,          "RSSI_RANGE",         5.0),
 
     // @Param: INVERTEDFLT_CH
     // @DisplayName: Inverted flight channel
@@ -920,6 +946,10 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Path: ../libraries/AP_BattMonitor/AP_BattMonitor.cpp
     GOBJECT(battery,                "BATT_",       AP_BattMonitor),
 
+    // @Group: BRD_
+    // @Path: ../libraries/AP_BoardConfig/AP_BoardConfig.cpp
+    GOBJECT(BoardConfig,            "BRD_",       AP_BoardConfig),
+
 #if CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
     // @Group: SIM_
     // @Path: ../libraries/SITL/SITL.cpp
@@ -964,6 +994,7 @@ const AP_Param::ConversionInfo conversion_table[] PROGMEM = {
     { Parameters::k_param_curr_amp_per_volt,  0,      AP_PARAM_FLOAT, "BATT_AMP_PERVOLT" },
     { Parameters::k_param_curr_amp_offset,    0,      AP_PARAM_FLOAT, "BATT_AMP_OFFSET" },
     { Parameters::k_param_pack_capacity,      0,      AP_PARAM_INT32, "BATT_CAPACITY" },
+    { Parameters::k_param_log_bitmask_old,    0,      AP_PARAM_INT16, "LOG_BITMASK" },
 };
 
 static void load_parameters(void)

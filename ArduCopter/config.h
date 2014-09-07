@@ -69,11 +69,13 @@
  # define CONFIG_IMU_TYPE   CONFIG_IMU_SITL
  # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
  # define MAGNETOMETER ENABLED
+ # define OPTFLOW DISABLED
 #elif CONFIG_HAL_BOARD == HAL_BOARD_PX4
  # define CONFIG_IMU_TYPE   CONFIG_IMU_PX4
  # define CONFIG_BARO       AP_BARO_PX4
  # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
  # define MAGNETOMETER ENABLED
+ # define OPTFLOW DISABLED
 #elif CONFIG_HAL_BOARD == HAL_BOARD_FLYMAPLE
  # define CONFIG_IMU_TYPE CONFIG_IMU_FLYMAPLE
  # define CONFIG_BARO AP_BARO_BMP085
@@ -81,6 +83,7 @@
  # define CONFIG_ADC        DISABLED
  # define MAGNETOMETER ENABLED
  # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
+ # define OPTFLOW DISABLED
 #elif CONFIG_HAL_BOARD == HAL_BOARD_LINUX
  # define CONFIG_IMU_TYPE CONFIG_IMU_L3G4200D
  # define CONFIG_BARO AP_BARO_BMP085
@@ -88,6 +91,7 @@
  # define CONFIG_ADC        DISABLED
  # define MAGNETOMETER ENABLED
  # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
+ # define OPTFLOW DISABLED
 #elif CONFIG_HAL_BOARD == HAL_BOARD_V2R
  # define CONFIG_IMU_TYPE CONFIG_IMU_INV_MPU_IIO
  # define CONFIG_BARO AP_BARO_BMP085
@@ -96,6 +100,7 @@
  # define MAGNETOMETER ENABLED
  # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
  # define GPS_PROTOCOL  GPS_PROTOCOL_GPSD
+ # define OPTFLOW DISABLED
 #else
 #error "Can't setup APM hardware defaults"
 #endif
@@ -106,32 +111,33 @@
 #ifndef FRAME_CONFIG
  # define FRAME_CONFIG   QUAD_FRAME
 #endif
-#ifndef FRAME_ORIENTATION
- # define FRAME_ORIENTATION      X_FRAME
-#endif
 
 /////////////////////////////////////////////////////////////////////////////////
 // TradHeli defaults
 #if FRAME_CONFIG == HELI_FRAME
-  # define RC_FAST_SPEED                125
-  # define WP_YAW_BEHAVIOR_DEFAULT      WP_YAW_BEHAVIOR_LOOK_AHEAD
-  # define RATE_INTEGRATOR_LEAK_RATE    0.02f
-  # define RATE_ROLL_D                  0
-  # define RATE_PITCH_D                 0
-  # define HELI_PITCH_FF                0
-  # define HELI_ROLL_FF                 0
-  # define HELI_YAW_FF                  0
-  # define STABILIZE_THR                THROTTLE_MANUAL_HELI
-  # define MPU6K_FILTER                 10
-  # define HELI_STAB_COLLECTIVE_MIN_DEFAULT   0
-  # define HELI_STAB_COLLECTIVE_MAX_DEFAULT   1000
-  # define THR_MIN_DEFAULT              0
+  # define RC_FAST_SPEED                        125
+  # define WP_YAW_BEHAVIOR_DEFAULT              WP_YAW_BEHAVIOR_LOOK_AHEAD
+  # define RATE_INTEGRATOR_LEAK_RATE            0.02f
+  # define RATE_ROLL_D                          0
+  # define RATE_PITCH_D                         0
+  # define HELI_PITCH_FF                        0
+  # define HELI_ROLL_FF                         0
+  # define HELI_YAW_FF                          0  
+  # define STABILIZE_THR                        THROTTLE_MANUAL_HELI
+  # define DRIFT_THR                            THROTTLE_MANUAL_HELI
+  # define MPU6K_FILTER                         10
+  # define HELI_STAB_COLLECTIVE_MIN_DEFAULT     0
+  # define HELI_STAB_COLLECTIVE_MAX_DEFAULT     1000
+  # define THR_MIN_DEFAULT                      0
+  # define AUTOTUNE                             DISABLED
+  
   # ifndef HELI_CC_COMP
     #define HELI_CC_COMP DISABLED
   #endif
   # ifndef HELI_PIRO_COMP
     #define HELI_PIRO_COMP DISABLED
   #endif
+  
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -379,15 +385,6 @@
 #ifndef OPTFLOW                         // sets global enabled/disabled flag for optflow (as seen in CLI)
  # define OPTFLOW                       ENABLED
 #endif
-#ifndef OPTFLOW_ORIENTATION
- # define OPTFLOW_ORIENTATION    AP_OPTICALFLOW_ADNS3080_PINS_FORWARD
-#endif
-#ifndef OPTFLOW_RESOLUTION
- # define OPTFLOW_RESOLUTION     ADNS3080_RESOLUTION_1600
-#endif
-#ifndef OPTFLOW_FOV
- # define OPTFLOW_FOV                    AP_OPTICALFLOW_ADNS3080_08_FOV
-#endif
 // optical flow based loiter PI values
 #ifndef OPTFLOW_ROLL_P
  #define OPTFLOW_ROLL_P 2.5f
@@ -475,6 +472,9 @@
 #ifndef LAND_DETECTOR_TRIGGER
  # define LAND_DETECTOR_TRIGGER 50    // number of 50hz iterations with near zero climb rate and low throttle that triggers landing complete.
 #endif
+#ifndef LAND_REQUIRE_MIN_THROTTLE_TO_DISARM // require pilot to reduce throttle to minimum before vehicle will disarm
+ # define LAND_REQUIRE_MIN_THROTTLE_TO_DISARM ENABLED
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // CAMERA TRIGGER AND CONTROL
@@ -498,13 +498,6 @@
 //////////////////////////////////////////////////////////////////////////////
 // Attitude Control
 //
-
-// definitions for earth frame and body frame
-// used to specify frame to rate controllers
-#define EARTH_FRAME         0
-#define BODY_FRAME          1
-#define BODY_EARTH_FRAME    2
-
 
 // Flight mode roll, pitch, yaw, throttle and navigation definitions
 
@@ -536,6 +529,11 @@
  # define ACRO_LEVEL_MAX_ANGLE      3000
 #endif
 
+// Drift Mode
+#ifndef DRIFT_THR
+ # define DRIFT_THR                 THROTTLE_MANUAL_TILT_COMPENSATED
+#endif
+
 // Sport Mode
 #ifndef SPORT_YAW
  # define SPORT_YAW           	    YAW_HOLD
@@ -565,7 +563,7 @@
 // AUTO Mode
 // Note: Auto mode yaw behaviour is controlled by WP_YAW_BEHAVIOR parameter
 #ifndef WP_YAW_BEHAVIOR_DEFAULT
- # define WP_YAW_BEHAVIOR_DEFAULT   WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP_EXCEPT_RTL
+ # define WP_YAW_BEHAVIOR_DEFAULT   WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP_EXCEPT_RTL     
 #endif
 
 #ifndef AUTO_RP
@@ -978,7 +976,6 @@
     MASK_LOG_CURRENT | \
     MASK_LOG_RCOUT | \
     MASK_LOG_COMPASS | \
-    MASK_LOG_INAV | \
     MASK_LOG_CAMERA
 #endif
 

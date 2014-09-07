@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <AP_Param.h>
 #include <AP_Math.h>
+#include <AP_Baro.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -13,6 +14,7 @@ void DataFlash_Class::Init(const struct LogStructure *structure, uint8_t num_typ
 {
     _num_types = num_types;
     _structures = structure;
+    _writes_enabled = true;
 }
 
 
@@ -706,6 +708,18 @@ void DataFlash_Class::Log_Write_RCOUT(void)
     WriteBlock(&pkt, sizeof(pkt));
 }
 
+// Write a BARO packet
+void DataFlash_Class::Log_Write_Baro(AP_Baro &baro)
+{
+    struct log_BARO pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_BARO_MSG),
+        timestamp     : hal.scheduler->millis(),
+        altitude      : baro.get_altitude(),
+        pressure	  : baro.get_pressure(),
+        temperature   : (int16_t)(baro.get_temperature() * 100),
+    };
+    WriteBlock(&pkt, sizeof(pkt));
+}
 
 // Write an raw accel/gyro data packet
 void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)

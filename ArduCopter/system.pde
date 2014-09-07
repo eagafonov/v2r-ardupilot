@@ -105,7 +105,7 @@ static void init_ardupilot()
 
     cliSerial->printf_P(PSTR("\n\nInit " FIRMWARE_STRING
                          "\n\nFree RAM: %u\n"),
-                    memcheck_available_memory());
+                        hal.util->available_memory());
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_APM2
     /*
@@ -122,6 +122,11 @@ static void init_ardupilot()
 
     // load parameters from EEPROM
     load_parameters();
+
+    BoardConfig.init();
+
+    // FIX: this needs to be the inverse motors mask
+    ServoRelayEvents.set_channel_mask(0xFFF0);
 
     relay.init();
 
@@ -263,7 +268,7 @@ static void init_ardupilot()
 #if HIL_MODE != HIL_MODE_ATTITUDE
     // read Baro pressure at ground
     //-----------------------------
-    init_barometer();
+    init_barometer(true);
 #endif
 
     // initialise sonar
@@ -479,7 +484,7 @@ static bool set_mode(uint8_t mode)
             set_yaw_mode(YAW_DRIFT);
             set_roll_pitch_mode(ROLL_PITCH_DRIFT);
             set_nav_mode(NAV_NONE);
-            set_throttle_mode(THROTTLE_MANUAL_TILT_COMPENSATED);
+            set_throttle_mode(DRIFT_THR);
             break;
 
         case SPORT:

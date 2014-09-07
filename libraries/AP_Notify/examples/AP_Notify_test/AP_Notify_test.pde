@@ -21,6 +21,8 @@
 #include <AP_GPS.h>
 #include <AP_InertialSensor.h>
 #include <AP_ADC.h>
+#include <AP_Baro.h>
+#include <Filter.h>
 
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 

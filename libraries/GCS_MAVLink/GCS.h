@@ -179,6 +179,10 @@ public:
     uint32_t        last_heartbeat_time; // milliseconds
 
     static bool mavlink_active;
+
+    // common send functions
+    void send_meminfo(void);
+
 private:
     void        handleMessage(mavlink_message_t * msg);
 
@@ -263,6 +267,9 @@ private:
     // offset in log
     uint32_t _log_data_offset;
 
+    // size of log file
+    uint32_t _log_data_size;
+
     // number of bytes left to send
     uint32_t _log_data_remaining;
 
@@ -274,7 +281,8 @@ private:
     void handle_log_message(mavlink_message_t *msg, DataFlash_Class &dataflash);
     void handle_log_send(DataFlash_Class &dataflash);
     void handle_log_send_listing(DataFlash_Class &dataflash);
-    void handle_log_send_data(DataFlash_Class &dataflash);
+    bool handle_log_send_data(DataFlash_Class &dataflash);
+
 };
 
 #endif // __GCS_H

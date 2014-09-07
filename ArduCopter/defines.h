@@ -90,28 +90,11 @@
 #define OCTA_QUAD_FRAME 7
 #define SINGLE_FRAME 8
 
-#define PLUS_FRAME 0
-#define X_FRAME 1
-#define V_FRAME 2
-
-// LED output
-#define NORMAL_LEDS 0
-#define SAVE_TRIM_LEDS 1
-
-
 // Internal defines, don't edit and expect things to work
 // -------------------------------------------------------
 
-#define TRUE 1
-#define FALSE 0
 #define ToRad(x) radians(x)	// *pi/180
 #define ToDeg(x) degrees(x)	// *180/pi
-
-#define DEBUG 0
-#define LOITER_RANGE 60 // for calculating power outside of loiter radius
-
-#define T6 1000000
-#define T7 10000000
 
 // GPS type codes - use the names, not the numbers
 #define GPS_PROTOCOL_NONE       -1
@@ -129,11 +112,6 @@
 #define HIL_MODE_DISABLED               0
 #define HIL_MODE_ATTITUDE               1
 #define HIL_MODE_SENSORS                2
-
-// Altitude status definitions
-#define REACHED_ALT                     0
-#define DESCENDING                      1
-#define ASCENDING                       2
 
 // Auto Pilot modes
 // ----------------
@@ -187,11 +165,19 @@
 #define CH6_DECLINATION                 38  // compass declination in radians
 #define CH6_CIRCLE_RATE                 39  // circle turn rate in degrees (hard coded to about 45 degrees in either direction)
 #define CH6_SONAR_GAIN                  41  // sonar gain
+#define CH6_LOIT_SPEED                  42  // maximum speed during loiter (0 to 10m/s)
 
 // Acro Trainer types
 #define ACRO_TRAINER_DISABLED   0
 #define ACRO_TRAINER_LEVELING   1
 #define ACRO_TRAINER_LIMITED    2
+
+// RC Feel roll/pitch definitions
+#define RC_FEEL_RP_VERY_SOFT        0
+#define RC_FEEL_RP_SOFT             25
+#define RC_FEEL_RP_MEDIUM           50
+#define RC_FEEL_RP_CRISP            75
+#define RC_FEEL_RP_VERY_CRISP       100
 
 // Commands - Note that APM now uses a subset of the MAVLink protocol
 // commands.  See enum MAV_CMD in the GCS_Mavlink library
@@ -199,6 +185,10 @@
                     // requested
 #define NO_COMMAND 0
 
+// Earth frame and body frame definitions used by rate controllers
+#define EARTH_FRAME         0
+#define BODY_FRAME          1
+#define BODY_EARTH_FRAME    2
 
 // Navigation modes held in nav_mode variable
 #define NAV_NONE        0
@@ -235,9 +225,6 @@
 #define LAND_STATE_FLY_TO_LOCATION  0
 #define LAND_STATE_DESCENDING       1
 
-//repeating events
-#define RELAY_TOGGLE 5
-
 //  Logging parameters
 #define TYPE_AIRSTART_MSG               0x00
 #define TYPE_GROUNDSTART_MSG            0x01
@@ -251,9 +238,9 @@
 #define LOG_STARTUP_MSG                 0x0A
 #define LOG_OPTFLOW_MSG                 0x0C
 #define LOG_EVENT_MSG                   0x0D
-#define LOG_PID_MSG                     0x0E
+#define LOG_PID_MSG                     0x0E    // deprecated
 #define LOG_COMPASS_MSG                 0x0F
-#define LOG_INAV_MSG                    0x11
+#define LOG_INAV_MSG                    0x11    // deprecated
 #define LOG_CAMERA_MSG                  0x12
 #define LOG_ERROR_MSG                   0x13
 #define LOG_DATA_INT16_MSG              0x14
@@ -279,9 +266,9 @@
 #define MASK_LOG_CURRENT                (1<<9)
 #define MASK_LOG_RCOUT                  (1<<10)
 #define MASK_LOG_OPTFLOW                (1<<11)
-#define MASK_LOG_PID                    (1<<12)
+#define MASK_LOG_PID                    (1<<12) // deprecated
 #define MASK_LOG_COMPASS                (1<<13)
-#define MASK_LOG_INAV                   (1<<14)
+#define MASK_LOG_INAV                   (1<<14) // deprecated
 #define MASK_LOG_CAMERA                 (1<<15)
 
 // DATA - event logging
@@ -324,8 +311,8 @@
 #define DATA_EPM_ON                     46
 #define DATA_EPM_OFF                    47
 #define DATA_EPM_NEUTRAL                48
-// RADIANS
-#define RADX100 0.000174532925f
+
+// Centi-degrees to radians
 #define DEGX100 5729.57795f
 
 
